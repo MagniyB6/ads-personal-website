@@ -163,32 +163,7 @@ function Hero() {
                 Смотреть кейсы
               </a>
             </div>
-            <div
-              className="mt-12 grid grid-cols-3 gap-3"
-              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards" }}
-            >
-              {[
-                { num: "6+", unit: "лет", desc: "опыта в рекламе", bg: "#FFF3E0", accent: "#E65100" },
-                { num: "50М", unit: "₽", desc: "открученного бюджета", bg: "#E8F5E9", accent: "#2E7D32" },
-                { num: "∞", unit: "", desc: "работаю с разными нишами", bg: "#EDE7F6", accent: "#4527A0" },
-              ].map((card) => (
-                <div
-                  key={card.desc}
-                  className="rounded-2xl flex flex-col items-center justify-center text-center py-6 px-3"
-                  style={{ background: card.bg, aspectRatio: "4/5" }}
-                >
-                  <div
-                    className="font-black leading-none mb-1"
-                    style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: card.accent }}
-                  >
-                    {card.num}<span style={{ fontSize: "0.6em" }}>{card.unit}</span>
-                  </div>
-                  <div className="text-xs font-medium leading-tight mt-2" style={{ color: card.accent + "cc" }}>
-                    {card.desc}
-                  </div>
-                </div>
-              ))}
-            </div>
+
           </div>
 
           <div
@@ -236,7 +211,7 @@ function About() {
 
 </p>
             <div className="flex flex-wrap gap-3">
-              {["VK Ads", "ВКонтакте", "Таргетинг", "Ретаргетинг", "A/B тесты", "Аналитика"].map((t) => (
+              {["VK Реклама", "Яндекс Директ", "Реклама в Телеграм", "Аналитика", "Дизайн"].map((t) => (
                 <span
                   key={t}
                   className="text-sm font-medium px-4 py-2 rounded-full"
@@ -249,9 +224,9 @@ function About() {
           </div>
           <div className="grid grid-cols-2 gap-5 animate-on-scroll" data-delay="150">
             {[
-              { icon: "Target", title: "Точный таргетинг", text: "Аудитории по интересам, поведению и похожим сегментам" },
-              { icon: "TrendingUp", title: "Оптимизация", text: "Постоянный анализ и улучшение показателей кампаний" },
-              { icon: "BarChart3", title: "Отчётность", text: "Понятные отчёты с реальными цифрами каждую неделю" },
+              { icon: "Target", title: "Профессиональный подход", text: "Нахожу эффективные связки, которые приводят к стабильным результатам KPI" },
+              { icon: "TrendingUp", title: "Контроль", text: "Постоянный контроль рекламных кампаний и внесение корректировок для достижения планов" },
+              { icon: "BarChart3", title: "Отчётность", text: "Понятные отчёты с реальными цифрами каждый месяц" },
               { icon: "Zap", title: "Быстрый старт", text: "Запуск первых кампаний в течение 3 рабочих дней" },
             ].map((item) => (
               <div
@@ -260,7 +235,7 @@ function About() {
                 style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <div className="mb-3 p-2.5 rounded-lg w-fit" style={{ background: "#FEEB19" }}>
-                  <Icon name={item.icon} size={18} />
+                  <Icon name={item.icon} size={18} color="#000" />
                 </div>
                 <div className="font-bold mb-2">{item.title}</div>
                 <div className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{item.text}</div>
