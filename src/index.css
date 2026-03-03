@@ -175,8 +175,9 @@
 
   .yellow-line {
     display: inline-block;
-    border-bottom: 3px solid #feeb19;
-    padding-bottom: 2px;
+    border-bottom: 5px solid #feeb19;
+    padding-bottom: 8px;
+    line-height: 1.15;
   }
 
   .tag {

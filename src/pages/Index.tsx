@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Icon from "@/components/ui/icon";
 
 const PHOTO_URL =
-  "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/files/d3d061b8-87c6-4a77-bac3-92f529d98a1c.jpg";
+  "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/079669ae-46e8-43c5-9795-d1f7d41c35a3.png";
 
 const TG_LINK = "https://t.me/YOUR_USERNAME";
 
@@ -144,14 +144,14 @@ function Hero() {
               className="hero-title mb-6"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.25s ease-out forwards" }}
             >
-              Контекст<br />и таргет,<br />
-              которые <span className="yellow-line">работают</span>
+              Универсальное<br />решение для<br />
+              вашего <span className="yellow-line">проекта</span>
             </h1>
             <p
               className="text-gray-500 text-lg leading-relaxed mb-10 max-w-md"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.4s ease-out forwards" }}
             >
-              Привожу клиентов через ВКонтакте и VK Ads. Системно, прозрачно, с измеримым результатом.
+              Привожу клиентов с онлайн-источников: Яндекс Директ, Телеграм, VK реклама и не только. Помогу настроить сквозную аналитику и опрозрачить входящий поток. Научу измерять результаты.
             </p>
             <div
               className="flex flex-wrap gap-4"
@@ -166,19 +166,19 @@ function Hero() {
               </a>
             </div>
             <div
-              className="flex gap-10 mt-14"
-              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards" }}
+              className="mt-14 pt-8"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards", borderTop: "1px solid #f0f0f0" }}
             >
-              {[
-                { num: "50+", label: "клиентов" },
-                { num: "3 года", label: "опыта" },
-                { num: "×4", label: "средний ROI" },
-              ].map((s) => (
-                <div key={s.label}>
-                  <div className="stat-number">{s.num}</div>
-                  <div className="text-sm text-gray-400 mt-1">{s.label}</div>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="stat-number">6+</span>
+                  <span className="text-gray-400 text-base">лет опыта в рекламе</span>
                 </div>
-              ))}
+                <div className="flex items-baseline gap-3 flex-wrap mt-2">
+                  <span className="stat-number" style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>50 000 000 ₽</span>
+                  <span className="text-gray-400 text-base">открученного бюджета</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -193,15 +193,15 @@ function Hero() {
               />
               <img
                 src={PHOTO_URL}
-                alt="Специалист по рекламе"
-                className="relative w-72 h-72 md:w-80 md:h-80 object-cover"
-                style={{ borderRadius: "20px", zIndex: 1 }}
+                alt="Алексей Николотов"
+                className="relative w-72 md:w-80 object-cover object-top"
+                style={{ borderRadius: "20px", zIndex: 1, height: "360px" }}
               />
               <div
-                className="absolute -bottom-4 -right-4 bg-black text-white text-xs font-bold px-4 py-2 rounded-full"
+                className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full whitespace-nowrap"
                 style={{ zIndex: 2 }}
               >
-                <span style={{ color: "#FEEB19" }}>●</span> Открыт к проектам
+                Алексей Николотов
               </div>
             </div>
           </div>
