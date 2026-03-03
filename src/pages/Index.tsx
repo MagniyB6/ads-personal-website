@@ -1,14 +1,820 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect, useState } from "react";
+import Icon from "@/components/ui/icon";
 
-const Index = () => {
+const PHOTO_URL =
+  "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/files/d3d061b8-87c6-4a77-bac3-92f529d98a1c.jpg";
+
+const TG_LINK = "https://t.me/YOUR_USERNAME";
+
+function useScrollAnimation() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".animate-on-scroll, .animate-on-scroll-left");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
+            setTimeout(() => el.classList.add("visible"), delay);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
+
+function CookieBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const accepted = localStorage.getItem("cookie_accepted");
+    if (!accepted) {
+      setTimeout(() => setVisible(true), 1200);
+    }
+  }, []);
+
+  const accept = () => {
+    localStorage.setItem("cookie_accepted", "1");
+    setVisible(false);
+  };
+
+  if (!visible) return null;
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 color-black text-black">Добро пожаловать!</h1>
-        <p className="text-xl text-gray-600">тут будет отображаться ваш проект</p>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-xl animate-fade-up">
+      <div className="bg-black text-white rounded-xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-2xl">
+        <p className="text-sm text-white/70 flex-1 leading-relaxed">
+          Используя сайт, вы соглашаетесь на{" "}
+          <span className="underline cursor-pointer" style={{ color: "#FEEB19" }}>обработку персональных данных</span>.
+        </p>
+        <button
+          onClick={accept}
+          className="shrink-0 font-bold text-sm px-5 py-3 rounded-lg transition-all active:scale-95 whitespace-nowrap"
+          style={{ background: "#FEEB19", color: "#000" }}
+        >
+          Понятно
+        </button>
       </div>
     </div>
   );
-};
+}
 
-export default Index;
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const links = [
+    { label: "Обо мне", href: "#about" },
+    { label: "Услуги", href: "#services" },
+    { label: "Кейсы", href: "#cases" },
+    { label: "Отзывы", href: "#reviews" },
+    { label: "Калькулятор", href: "#calculator" },
+    { label: "Контакты", href: "#contacts" },
+  ];
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
+      style={{
+        background: scrolled ? "rgba(255,255,255,0.97)" : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        borderBottom: scrolled ? "1px solid #f0f0f0" : "none",
+      }}
+    >
+      <div className="container-narrow flex items-center justify-between h-16 md:h-20">
+        <a href="#" className="font-black text-xl tracking-tight flex items-center gap-1.5">
+          <span style={{ color: "#FEEB19" }}>●</span> Реклама
+        </a>
+        <nav className="hidden md:flex items-center gap-8">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="nav-link">
+              {l.label}
+            </a>
+          ))}
+        </nav>
+        <a
+          href={TG_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:inline-flex btn-primary text-sm py-3 px-6"
+        >
+          Консультация
+        </a>
+        <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
+          <Icon name={menuOpen ? "X" : "Menu"} size={22} />
+        </button>
+      </div>
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 px-6 py-6 flex flex-col gap-5">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="text-base font-medium" onClick={() => setMenuOpen(false)}>
+              {l.label}
+            </a>
+          ))}
+          <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm py-3 px-6 w-fit">
+            Консультация
+          </a>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section id="home" className="min-h-screen flex items-center pt-20 bg-white">
+      <div className="container-narrow w-full py-20">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <div
+              className="tag mb-6"
+              style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}
+            >
+              Специалист по рекламе
+            </div>
+            <h1
+              className="hero-title mb-6"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.25s ease-out forwards" }}
+            >
+              Контекст<br />и таргет,<br />
+              которые <span className="yellow-line">работают</span>
+            </h1>
+            <p
+              className="text-gray-500 text-lg leading-relaxed mb-10 max-w-md"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.4s ease-out forwards" }}
+            >
+              Привожу клиентов через ВКонтакте и VK Ads. Системно, прозрачно, с измеримым результатом.
+            </p>
+            <div
+              className="flex flex-wrap gap-4"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.55s ease-out forwards" }}
+            >
+              <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                <Icon name="MessageCircle" size={18} />
+                Написать в Telegram
+              </a>
+              <a href="#cases" className="btn-outline">
+                Смотреть кейсы
+              </a>
+            </div>
+            <div
+              className="flex gap-10 mt-14"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards" }}
+            >
+              {[
+                { num: "50+", label: "клиентов" },
+                { num: "3 года", label: "опыта" },
+                { num: "×4", label: "средний ROI" },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div className="stat-number">{s.num}</div>
+                  <div className="text-sm text-gray-400 mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="flex justify-center md:justify-end"
+            style={{ opacity: 0, animation: "fade-in 0.9s 0.4s ease-out forwards" }}
+          >
+            <div className="relative">
+              <div
+                className="absolute -inset-3 rounded-3xl"
+                style={{ background: "#FEEB19", zIndex: 0 }}
+              />
+              <img
+                src={PHOTO_URL}
+                alt="Специалист по рекламе"
+                className="relative w-72 h-72 md:w-80 md:h-80 object-cover"
+                style={{ borderRadius: "20px", zIndex: 1 }}
+              />
+              <div
+                className="absolute -bottom-4 -right-4 bg-black text-white text-xs font-bold px-4 py-2 rounded-full"
+                style={{ zIndex: 2 }}
+              >
+                <span style={{ color: "#FEEB19" }}>●</span> Открыт к проектам
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function About() {
+  return (
+    <section id="about" className="section-padding bg-black text-white">
+      <div className="container-narrow">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="animate-on-scroll">
+            <div className="tag mb-6">Обо мне</div>
+            <h2 className="section-title mb-6">
+              Помогаю бизнесу<br />
+              <span style={{ color: "#FEEB19" }}>расти через рекламу</span>
+            </h2>
+            <p className="text-white/60 text-lg leading-relaxed mb-6">
+              Специализируюсь на платном трафике через ВКонтакте и VK Ads. Работаю с малым и средним
+              бизнесом — настраиваю кампании так, чтобы каждый рубль приносил результат.
+            </p>
+            <p className="text-white/60 text-lg leading-relaxed mb-10">
+              Всё прозрачно: еженедельные отчёты, чёткие KPI, постоянная оптимизация. Не просто «трафик»,
+              а реальные заявки и продажи.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {["VK Ads", "ВКонтакте", "Таргетинг", "Ретаргетинг", "A/B тесты", "Аналитика"].map((t) => (
+                <span
+                  key={t}
+                  className="text-sm font-medium px-4 py-2 rounded-full"
+                  style={{ border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-5 animate-on-scroll" data-delay="150">
+            {[
+              { icon: "Target", title: "Точный таргетинг", text: "Аудитории по интересам, поведению и похожим сегментам" },
+              { icon: "TrendingUp", title: "Оптимизация", text: "Постоянный анализ и улучшение показателей кампаний" },
+              { icon: "BarChart3", title: "Отчётность", text: "Понятные отчёты с реальными цифрами каждую неделю" },
+              { icon: "Zap", title: "Быстрый старт", text: "Запуск первых кампаний в течение 3 рабочих дней" },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="p-6 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <div className="mb-3 p-2.5 rounded-lg w-fit" style={{ background: "#FEEB19" }}>
+                  <Icon name={item.icon} size={18} />
+                </div>
+                <div className="font-bold mb-2">{item.title}</div>
+                <div className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{item.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Services() {
+  const services = [
+    {
+      icon: "Target",
+      title: "Таргетированная реклама ВК",
+      price: "от 30 000 ₽/мес",
+      desc: "Настройка и ведение рекламных кампаний во ВКонтакте. Подбор аудиторий, создание объявлений, А/Б тестирование.",
+      features: ["Настройка кампаний", "Подбор аудиторий", "Создание креативов", "Еженедельные отчёты"],
+    },
+    {
+      icon: "Zap",
+      title: "VK Ads (новый кабинет)",
+      price: "от 30 000 ₽/мес",
+      desc: "Реклама через новый кабинет VK Ads. Максимальный охват экосистемы ВКонтакте, автоматические стратегии.",
+      features: ["VK Ads кабинет", "Автостратегии", "Lookalike аудитории", "Оптимизация CPA"],
+    },
+    {
+      icon: "BarChart3",
+      title: "Аудит рекламных кампаний",
+      price: "от 10 000 ₽",
+      desc: "Полный разбор текущих кампаний: выявление слабых мест, рекомендации по улучшению результатов.",
+      features: ["Анализ кампаний", "Выявление слабых мест", "Рекомендации", "Письменный отчёт"],
+    },
+    {
+      icon: "Users",
+      title: "Стратегия и консалтинг",
+      price: "от 15 000 ₽",
+      desc: "Разработка стратегии продвижения: какие площадки выбрать, как выстроить воронку, как снизить стоимость заявки.",
+      features: ["Анализ ниши", "Стратегия продвижения", "Структура воронки", "Медиаплан"],
+    },
+  ];
+
+  return (
+    <section id="services" className="section-padding bg-white">
+      <div className="container-narrow">
+        <div className="mb-16 animate-on-scroll">
+          <div className="tag mb-4">Услуги</div>
+          <h2 className="section-title">
+            Что я делаю<br />
+            <span className="yellow-line">для вашего бизнеса</span>
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          {services.map((s, i) => (
+            <div key={s.title} className="card-service animate-on-scroll" data-delay={`${i * 100}`}>
+              <div className="flex items-start justify-between mb-6">
+                <div className="p-3 rounded-lg" style={{ background: "#FEEB19" }}>
+                  <Icon name={s.icon} size={22} />
+                </div>
+                <span className="font-bold text-sm text-gray-600">{s.price}</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">{s.title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed mb-6">{s.desc}</p>
+              <ul className="flex flex-col gap-2.5">
+                {s.features.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#FEEB19" }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-12 text-center animate-on-scroll">
+          <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <Icon name="MessageCircle" size={18} />
+            Обсудить проект
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Cases() {
+  const cases = [
+    {
+      tag: "Интернет-магазин",
+      title: "Магазин одежды",
+      result: "+340% продаж",
+      budget: "150 000 ₽/мес",
+      cpa: "CPA: 420 ₽",
+      bg: "#FEEB19",
+      accent: "#000",
+      desc: "Запустили ретаргетинг на тёплую аудиторию + lookalike. За 3 месяца снизили стоимость заявки в 2,5 раза.",
+    },
+    {
+      tag: "Образование",
+      title: "Онлайн-школа",
+      result: "×4.2 ROI",
+      budget: "80 000 ₽/мес",
+      cpa: "CPA: 280 ₽",
+      bg: "#000",
+      accent: "#FEEB19",
+      desc: "Настроили кампании на лидогенерацию через VK Ads. 180+ заявок в месяц при минимальной стоимости.",
+    },
+    {
+      tag: "Услуги",
+      title: "Клиника красоты",
+      result: "×3.8 заявок",
+      budget: "60 000 ₽/мес",
+      cpa: "CPA: 650 ₽",
+      bg: "#f5f5f5",
+      accent: "#000",
+      desc: "Геотаргетинг + интересы. Заявки выросли в 3,8 раза относительно предыдущего подрядчика.",
+    },
+  ];
+
+  return (
+    <section id="cases" className="section-padding" style={{ background: "#fafafa" }}>
+      <div className="container-narrow">
+        <div className="mb-16 animate-on-scroll">
+          <div className="tag mb-4">Кейсы</div>
+          <h2 className="section-title">
+            Результаты,<br />
+            <span className="yellow-line">которые говорят сами</span>
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {cases.map((c, i) => (
+            <div
+              key={c.title}
+              className="case-card animate-on-scroll"
+              data-delay={`${i * 120}`}
+              style={{ background: c.bg }}
+            >
+              <div className="p-8" style={{ color: c.accent }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-6 opacity-50">{c.tag}</div>
+                <h3 className="text-2xl font-black mb-2">{c.title}</h3>
+                <div className="text-5xl font-black mb-1" style={{ color: c.bg === "#FEEB19" ? "#000" : "#FEEB19" }}>
+                  {c.result}
+                </div>
+                <p className="text-sm leading-relaxed mt-4 mb-6" style={{ opacity: 0.55 }}>{c.desc}</p>
+                <div
+                  className="flex gap-3 text-xs font-semibold pt-4 flex-wrap"
+                  style={{ borderTop: `1px solid ${c.bg === "#000" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`, opacity: 0.6 }}
+                >
+                  <span>{c.budget}</span>
+                  <span>·</span>
+                  <span>{c.cpa}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Reviews() {
+  const reviews = [
+    {
+      name: "Александра М.",
+      role: "Владелец интернет-магазина",
+      text: "За 2 месяца работы стоимость заявки снизилась с 1200 до 480 рублей. Результат превзошёл все ожидания. Всё прозрачно и понятно.",
+    },
+    {
+      name: "Дмитрий К.",
+      role: "Директор онлайн-школы",
+      text: "Наконец-то нашёл специалиста, который говорит на языке бизнеса. Никаких «охватов» — только заявки и продажи.",
+    },
+    {
+      name: "Марина Т.",
+      role: "Руководитель клиники",
+      text: "Профессиональный подход, честная работа. Результаты отслеживаются в реальном времени, всё понятно без технических знаний.",
+    },
+    {
+      name: "Игорь В.",
+      role: "Основатель стартапа",
+      text: "Работаем полгода. Тестировали разные гипотезы — всё чётко, структурно, с аналитикой по каждому тесту.",
+    },
+  ];
+
+  return (
+    <section id="reviews" className="section-padding bg-white">
+      <div className="container-narrow">
+        <div className="mb-16 animate-on-scroll">
+          <div className="tag mb-4">Отзывы</div>
+          <h2 className="section-title">
+            Что говорят<br />
+            <span className="yellow-line">клиенты</span>
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          {reviews.map((r, i) => (
+            <div key={r.name} className="review-card animate-on-scroll" data-delay={`${i * 100}`}>
+              <div className="flex items-center gap-1 mb-5">
+                {[1,2,3,4,5].map((j) => (
+                  <Icon key={j} name="Star" size={16} style={{ color: "#FEEB19", fill: "#FEEB19" }} />
+                ))}
+              </div>
+              <p className="text-gray-700 leading-relaxed mb-6 text-base">«{r.text}»</p>
+              <div>
+                <div className="font-bold text-sm">{r.name}</div>
+                <div className="text-gray-400 text-xs mt-0.5">{r.role}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Calculator() {
+  const [cpa, setCpa] = useState("");
+  const [source, setSource] = useState("vk");
+  const [leads, setLeads] = useState("");
+  const [showConsult, setShowConsult] = useState(false);
+  const [calculated, setCalculated] = useState(false);
+
+  const SERVICE_FEE = 30000;
+
+  const adBudget = cpa && leads ? Math.ceil(parseFloat(cpa) * parseInt(leads)) : 0;
+  const total = adBudget + SERVICE_FEE;
+
+  const handleCalc = () => {
+    if (!cpa || !leads) {
+      setShowConsult(true);
+      return;
+    }
+    setCalculated(true);
+  };
+
+  const reset = () => {
+    setCpa("");
+    setLeads("");
+    setCalculated(false);
+    setShowConsult(false);
+  };
+
+  return (
+    <section id="calculator" className="section-padding bg-black text-white">
+      <div className="container-narrow">
+        <div className="mb-16 animate-on-scroll">
+          <div className="tag mb-4">Калькулятор бюджета</div>
+          <h2 className="section-title text-white">
+            Рассчитайте<br />
+            <span style={{ color: "#FEEB19" }}>ваш бюджет</span>
+          </h2>
+          <p className="text-white/50 mt-4 text-lg max-w-lg">
+            Укажите параметры — получите примерную стоимость рекламной кампании под вашу цель.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-12 items-start">
+          <div className="animate-on-scroll flex flex-col gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-white/60 mb-3">Рекламная площадка</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { val: "vk", label: "ВКонтакте" },
+                  { val: "vkads", label: "VK Ads" },
+                ].map((s) => (
+                  <button
+                    key={s.val}
+                    onClick={() => setSource(s.val)}
+                    className="py-4 px-4 rounded-lg font-semibold text-sm transition-all"
+                    style={
+                      source === s.val
+                        ? { background: "#FEEB19", color: "#000" }
+                        : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }
+                    }
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-white/60 mb-2">
+                Стоимость CPA (целевого действия), ₽
+              </label>
+              <input
+                type="number"
+                placeholder="Например: 500"
+                value={cpa}
+                onChange={(e) => { setCpa(e.target.value); setCalculated(false); }}
+                className="input-field"
+                style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "#fff" }}
+              />
+              <p className="text-white/30 text-xs mt-2">Если не знаете — оставьте пустым и нажмите «Рассчитать»</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-white/60 mb-2">
+                Желаемое количество заявок в месяц
+              </label>
+              <input
+                type="number"
+                placeholder="Например: 100"
+                value={leads}
+                onChange={(e) => { setLeads(e.target.value); setCalculated(false); }}
+                className="input-field"
+                style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "#fff" }}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCalc}
+                className="flex-1 py-4 font-bold text-black rounded-lg transition-all hover:opacity-90 active:scale-95"
+                style={{ background: "#FEEB19" }}
+              >
+                Рассчитать бюджет
+              </button>
+              {calculated && (
+                <button
+                  onClick={reset}
+                  className="px-5 py-4 rounded-lg font-semibold text-sm transition-all"
+                  style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.5)" }}
+                >
+                  Сбросить
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="animate-on-scroll" data-delay="150">
+            {calculated ? (
+              <div
+                className="rounded-2xl p-8"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(254,235,25,0.25)" }}
+              >
+                <div className="text-xs font-bold text-white/40 mb-8 uppercase tracking-widest">Расчёт бюджета</div>
+                <div className="flex flex-col gap-5">
+                  {[
+                    { label: "Площадка", value: source === "vk" ? "ВКонтакте" : "VK Ads" },
+                    { label: "CPA (1 заявка)", value: `${parseFloat(cpa).toLocaleString("ru")} ₽` },
+                    { label: "Заявок в месяц", value: `${parseInt(leads).toLocaleString("ru")} шт` },
+                    { label: "Рекламный бюджет", value: `${adBudget.toLocaleString("ru")} ₽` },
+                    { label: "Стоимость ведения", value: `${SERVICE_FEE.toLocaleString("ru")} ₽` },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex justify-between items-center pb-4"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+                    >
+                      <span className="text-white/50 text-sm">{row.label}</span>
+                      <span className="font-semibold">{row.value}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-bold text-lg">Итого в месяц</span>
+                    <span className="font-black text-3xl" style={{ color: "#FEEB19" }}>
+                      {total.toLocaleString("ru")} ₽
+                    </span>
+                  </div>
+                </div>
+                <a
+                  href={TG_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-8 w-full flex items-center justify-center gap-2 py-4 font-bold text-black rounded-lg transition-all hover:opacity-90"
+                  style={{ background: "#FEEB19" }}
+                >
+                  <Icon name="MessageCircle" size={18} />
+                  Обсудить в Telegram
+                </a>
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl p-8 min-h-64 flex flex-col justify-between"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.12)" }}
+              >
+                <div>
+                  <div className="text-6xl font-black mb-4" style={{ color: "#FEEB19" }}>?</div>
+                  <p className="text-white/40 text-lg leading-relaxed">
+                    Заполните форму слева, чтобы увидеть расчёт рекламного бюджета под вашу задачу.
+                  </p>
+                </div>
+                <p className="text-white/25 text-sm mt-8">
+                  Не знаете CPA? Нажмите «Рассчитать» — я помогу определить его на бесплатной консультации.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showConsult && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+          onClick={() => setShowConsult(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-10 max-w-md w-full text-black"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: "scale-in 0.3s ease-out forwards" }}
+          >
+            <div className="text-4xl mb-5">🤝</div>
+            <h3 className="text-2xl font-black mb-3">Не знаете данные?</h3>
+            <p className="text-gray-500 leading-relaxed mb-8">
+              Это нормально — у большинства новых клиентов ещё нет статистики. На бесплатной консультации
+              я помогу определить реалистичный CPA для вашей ниши и рассчитаю бюджет.
+            </p>
+            <div className="flex flex-col gap-3">
+              <a
+                href={TG_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary justify-center w-full"
+              >
+                <Icon name="MessageCircle" size={18} />
+                Написать в Telegram
+              </a>
+              <button
+                onClick={() => setShowConsult(false)}
+                className="text-gray-400 text-sm py-2 hover:text-black transition-colors"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Contacts() {
+  const socials = [
+    { icon: "Send", label: "Telegram", handle: "@YOUR_USERNAME", href: TG_LINK },
+    { icon: "Users", label: "ВКонтакте", handle: "vk.com/yourpage", href: "https://vk.com/yourpage" },
+    { icon: "Camera", label: "Instagram", handle: "@yourhandle", href: "https://instagram.com/yourhandle" },
+  ];
+
+  return (
+    <section id="contacts" className="section-padding bg-white">
+      <div className="container-narrow">
+        <div className="grid md:grid-cols-2 gap-16 items-start">
+          <div className="animate-on-scroll">
+            <div className="tag mb-4">Контакты</div>
+            <h2 className="section-title mb-6">
+              Готовы к<br />
+              <span className="yellow-line">запуску?</span>
+            </h2>
+            <p className="text-gray-500 text-lg leading-relaxed mb-10">
+              Напишите мне — обсудим задачу, расскажу как могу помочь и сделаю расчёт бюджета.
+            </p>
+            <div className="flex flex-col gap-4">
+              {socials.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-5 rounded-xl hover-lift group"
+                  style={{ border: "1px solid #f0f0f0" }}
+                >
+                  <div className="p-3 rounded-xl" style={{ background: "#FEEB19" }}>
+                    <Icon name={s.icon} size={20} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">{s.label}</div>
+                    <div className="text-gray-400 text-sm">{s.handle}</div>
+                  </div>
+                  <Icon name="ArrowRight" size={16} className="ml-auto text-gray-300 group-hover:text-black transition-colors" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl p-10 animate-on-scroll"
+            data-delay="150"
+            style={{ background: "#FEEB19" }}
+          >
+            <h3 className="text-2xl font-black mb-2">Бесплатная консультация</h3>
+            <p className="text-black/60 mb-8 leading-relaxed">
+              30 минут — разберём вашу задачу и я скажу, чего реально добиться с рекламой.
+            </p>
+            <div className="flex flex-col gap-4 mb-10">
+              {[
+                "Напишите в Telegram",
+                "Расскажите о вашем проекте",
+                "Получите план и расчёт бюджета",
+              ].map((step, i) => (
+                <div key={step} className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
+                    style={{ background: "#000", color: "#fff" }}
+                  >
+                    {i + 1}
+                  </div>
+                  <span className="font-medium">{step}</span>
+                </div>
+              ))}
+            </div>
+            <a
+              href={TG_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-black text-white font-bold py-4 px-8 rounded-lg transition-all w-full"
+              style={{ transition: "all 0.25s ease" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.background = "#fff";
+                (e.currentTarget as HTMLAnchorElement).style.color = "#000";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.background = "#000";
+                (e.currentTarget as HTMLAnchorElement).style.color = "#fff";
+              }}
+            >
+              <Icon name="MessageCircle" size={18} />
+              Написать сейчас
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="py-8 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
+      <div className="container-narrow flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+        <div className="font-black text-lg flex items-center gap-1.5">
+          <span style={{ color: "#FEEB19" }}>●</span> Реклама
+        </div>
+        <p className="text-gray-400">© 2025 · Специалист по контекстной и таргетированной рекламе</p>
+        <p className="text-gray-300 text-xs">Данные используются только для связи</p>
+      </div>
+    </footer>
+  );
+}
+
+export default function Index() {
+  useScrollAnimation();
+
+  return (
+    <div className="font-golos">
+      <CookieBanner />
+      <Navbar />
+      <Hero />
+      <About />
+      <Services />
+      <Cases />
+      <Reviews />
+      <Calculator />
+      <Contacts />
+      <Footer />
+    </div>
+  );
+}
