@@ -141,12 +141,9 @@ function Hero() {
               Специалист по рекламе
             </div>
             <h1
-              className="hero-title mb-6 text-left text-6xl"
+              className="hero-title text-left px-0 mx-0 my-0 py-0 text-6xl"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.25s ease-out forwards" }}
-            >
-              Универсальное<br />решение для<br />
-              вашего <span className="yellow-line">проекта</span>
-            </h1>
+            >Универсальное решение для вашего проекта</h1>
             <p
               className="text-gray-500 text-lg leading-relaxed mb-10 max-w-md"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.4s ease-out forwards" }}
