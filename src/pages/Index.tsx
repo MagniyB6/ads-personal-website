@@ -91,8 +91,12 @@ function Navbar() {
       }}
     >
       <div className="container-narrow flex items-center justify-between h-16 md:h-20">
-        <a href="#" className="font-black text-xl tracking-tight flex items-center gap-1.5">
-          <span style={{ color: "#FEEB19" }}>●</span> Реклама
+        <a href="#" className="flex items-center">
+          <img
+            src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/dd45e3fd-28fc-47b2-985a-e7d2baded4ea.png"
+            alt="NikolotovADS"
+            className="h-10 w-auto object-contain"
+          />
         </a>
         <nav className="hidden md:flex items-center gap-8">
           {links.map((l) => (
@@ -882,9 +886,11 @@ function Footer() {
   return (
     <footer className="py-8 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
       <div className="container-narrow flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-        <div className="font-black text-lg flex items-center gap-1.5">
-          <span style={{ color: "#FEEB19" }}>●</span> Реклама
-        </div>
+        <img
+          src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/dd45e3fd-28fc-47b2-985a-e7d2baded4ea.png"
+          alt="NikolotovADS"
+          className="h-8 w-auto object-contain"
+        />
         <p className="text-gray-400">© 2025 · Специалист по контекстной и таргетированной рекламе</p>
         <p className="text-gray-300 text-xs">Данные используются только для связи</p>
       </div>
