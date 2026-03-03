@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Icon from "@/components/ui/icon";
 
 const PHOTO_URL =
-  "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/079669ae-46e8-43c5-9795-d1f7d41c35a3.png";
+  "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/1d27eeac-7db6-458f-b2bf-43ffdf5d69a8.png";
 
 const TG_LINK = "http://t.me/Niggalotov";
 const VK_LINK = "https://vk.com/niggalotovads";
