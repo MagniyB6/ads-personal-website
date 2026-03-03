@@ -4,7 +4,8 @@ import Icon from "@/components/ui/icon";
 const PHOTO_URL =
   "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/079669ae-46e8-43c5-9795-d1f7d41c35a3.png";
 
-const TG_LINK = "https://t.me/YOUR_USERNAME";
+const TG_LINK = "http://t.me/Niggalotov";
+const VK_LINK = "https://vk.com/niggalotovads";
 
 function useScrollAnimation() {
   useEffect(() => {
@@ -163,19 +164,30 @@ function Hero() {
               </a>
             </div>
             <div
-              className="mt-14 pt-8"
-              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards", borderTop: "1px solid #f0f0f0" }}
+              className="mt-12 grid grid-cols-3 gap-3"
+              style={{ opacity: 0, animation: "fade-up 0.7s 0.7s ease-out forwards" }}
             >
-              <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="stat-number">6+</span>
-                  <span className="text-gray-400 text-base">лет опыта в рекламе</span>
+              {[
+                { num: "6+", unit: "лет", desc: "опыта в рекламе", bg: "#FFF3E0", accent: "#E65100" },
+                { num: "50М", unit: "₽", desc: "открученного бюджета", bg: "#E8F5E9", accent: "#2E7D32" },
+                { num: "∞", unit: "", desc: "работаю с разными нишами", bg: "#EDE7F6", accent: "#4527A0" },
+              ].map((card) => (
+                <div
+                  key={card.desc}
+                  className="rounded-2xl flex flex-col items-center justify-center text-center py-6 px-3"
+                  style={{ background: card.bg, aspectRatio: "4/5" }}
+                >
+                  <div
+                    className="font-black leading-none mb-1"
+                    style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: card.accent }}
+                  >
+                    {card.num}<span style={{ fontSize: "0.6em" }}>{card.unit}</span>
+                  </div>
+                  <div className="text-xs font-medium leading-tight mt-2" style={{ color: card.accent + "cc" }}>
+                    {card.desc}
+                  </div>
                 </div>
-                <div className="flex items-baseline gap-3 flex-wrap mt-2">
-                  <span className="stat-number" style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>50 000 000 ₽</span>
-                  <span className="text-gray-400 text-base">открученного бюджета</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -684,9 +696,8 @@ function Calculator() {
 
 function Contacts() {
   const socials = [
-    { icon: "Send", label: "Telegram", handle: "@YOUR_USERNAME", href: TG_LINK },
-    { icon: "Users", label: "ВКонтакте", handle: "vk.com/yourpage", href: "https://vk.com/yourpage" },
-    { icon: "Camera", label: "Instagram", handle: "@yourhandle", href: "https://instagram.com/yourhandle" },
+    { icon: "Send", label: "Telegram", handle: "@Niggalotov", href: TG_LINK },
+    { icon: "Users", label: "ВКонтакте", handle: "vk.com/niggalotovads", href: VK_LINK },
   ];
 
   return (
