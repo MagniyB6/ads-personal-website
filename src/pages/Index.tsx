@@ -222,14 +222,10 @@ function About() {
               Помогаю бизнесу<br />
               <span style={{ color: "#FEEB19" }}>расти через рекламу</span>
             </h2>
-            <p className="text-white/60 text-lg leading-relaxed mb-6">
-              Специализируюсь на платном трафике через ВКонтакте и VK Ads. Работаю с малым и средним
-              бизнесом — настраиваю кампании так, чтобы каждый рубль приносил результат.
-            </p>
-            <p className="text-white/60 text-lg leading-relaxed mb-10">
-              Всё прозрачно: еженедельные отчёты, чёткие KPI, постоянная оптимизация. Не просто «трафик»,
-              а реальные заявки и продажи.
-            </p>
+            <p className="text-white/60 text-lg leading-relaxed mb-6">Специализируюсь на онлайн источниках трафика Яндекс Директ и VK Рекламе и других. Помимо рекламы закрываю и вопросы дизайна для проекта.</p>
+            <p className="text-white/60 text-lg leading-relaxed mb-10">Всё прозрачно: ежемесячные отчёты, постоянная оптимизация и контроль состояния рекламы. Не просто «трафик», а помощь в построении нормальной сквозной аналитики
+
+</p>
             <div className="flex flex-wrap gap-3">
               {["VK Ads", "ВКонтакте", "Таргетинг", "Ретаргетинг", "A/B тесты", "Аналитика"].map((t) => (
                 <span
@@ -305,10 +301,7 @@ function Services() {
       <div className="container-narrow">
         <div className="mb-16 animate-on-scroll">
           <div className="tag mb-4">Услуги</div>
-          <h2 className="section-title">
-            Что я делаю<br />
-            <span className="yellow-line">для вашего бизнеса</span>
-          </h2>
+          <h2 className="section-title">Чем я могу быть полезен</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {services.map((s, i) => (
@@ -384,7 +377,7 @@ function Cases() {
           <div className="tag mb-4">Кейсы</div>
           <h2 className="section-title">
             Результаты,<br />
-            <span className="yellow-line">которые говорят сами</span>
+            <span className="yellow-line">которые говорят сами за себя</span>
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
@@ -450,7 +443,7 @@ function Reviews() {
           <div className="tag mb-4">Отзывы</div>
           <h2 className="section-title">
             Что говорят<br />
-            <span className="yellow-line">клиенты</span>
+            <span className="yellow-line">клиенты обо мне</span>
           </h2>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
