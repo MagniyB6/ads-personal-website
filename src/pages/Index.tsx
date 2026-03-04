@@ -236,6 +236,16 @@ const CERTIFICATES = [
     title: "Сертификат VK Реклама",
     subtitle: "VK Бизнес · Сертифицированный специалист · До 07.11.2025",
   },
+  {
+    url: "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/2e517d86-65bb-4b0e-8214-cd1a0bd0ad9b.jpg",
+    title: "Сертификат специалиста Яндекс Директ (Продвинутый)",
+    subtitle: "Яндекс · Продвинутый уровень · Активен до 24.12.2025",
+  },
+  {
+    url: "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/63dabb27-15ad-41be-bab8-3f4b7d27868e.jpg",
+    title: "Сертификат Digit Education",
+    subtitle: "Индивидуальное обучение контекстной рекламе в Яндекс · 2024",
+  },
 ];
 
 function Certificates() {
@@ -282,7 +292,7 @@ function Certificates() {
                   style={{ transform: i === current ? "scale(1)" : "scale(0.92)", opacity: i === current ? 1 : 0.6, transition: "all 0.35s ease" }}
                 >
                   <div
-                    className="rounded-2xl overflow-hidden shadow-lg cursor-zoom-in bg-gray-50"
+                    className="rounded-2xl overflow-hidden shadow-lg cursor-zoom-in bg-gray-50 transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl hover:shadow-black/20"
                     onClick={() => setLightbox(cert.url)}
                   >
                     <img
