@@ -155,8 +155,9 @@ export function Cases() {
       result: "122 заявки",
       budget: "Бюджет: 57 500 ₽",
       cpa: "CPA: 471 ₽",
-      bg: "#FEEB19",
-      accent: "#000",
+      bg: "#FBEF64",
+      accent: "#1a1a1a",
+      resultColor: "#1a1a1a",
       desc: "Запустил VK рекламу, получили заявки по низкой цене и продажу, с которой риелтор получил 600 000 ₽ комиссии.",
     },
     {
@@ -165,8 +166,9 @@ export function Cases() {
       result: "124 заявки",
       budget: "Бюджет: 143 510 ₽",
       cpa: "CPA: 941 ₽",
-      bg: "#000",
-      accent: "#FEEB19",
+      bg: "#111111",
+      accent: "#ffffff",
+      resultColor: "#FBEF64",
       desc: "Реклама в Яндекс Директ в низкий спрос. При тратах в 2 раза меньше конкурентов — результаты по CPA в 2,5 раза лучше.",
     },
     {
@@ -175,8 +177,9 @@ export function Cases() {
       result: "27 заявок",
       budget: "Бюджет: 43 794 ₽",
       cpa: "CPA: 1 622 ₽",
-      bg: "#f5f5f5",
-      accent: "#000",
+      bg: "#64C1FB",
+      accent: "#0a2a3d",
+      resultColor: "#fff",
       desc: "Реклама в Яндекс Директ. Поисковая кампания на микроконверсиях принесла живые заявки по низкой стоимости для этой ниши.",
     },
     {
@@ -185,8 +188,9 @@ export function Cases() {
       result: "82 заявки",
       budget: "Бюджет: 46 083 ₽",
       cpa: "CPA: 562 ₽",
-      bg: "#000",
-      accent: "#FEEB19",
+      bg: "#91B584",
+      accent: "#1a2e15",
+      resultColor: "#fff",
       desc: "Генерация клиентов по загородной недвижимости в Красноярске через VK рекламу.",
     },
   ];
@@ -217,9 +221,7 @@ export function Cases() {
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLDivElement).style.transform = "scale(1.03)";
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = c.bg === "#000"
-                      ? "0 24px 60px rgba(254,235,25,0.25)"
-                      : "0 24px 60px rgba(0,0,0,0.18)";
+                    (e.currentTarget as HTMLDivElement).style.boxShadow = "0 24px 60px rgba(0,0,0,0.18)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLDivElement).style.transform = "scale(1)";
@@ -229,13 +231,13 @@ export function Cases() {
                   <div className="p-8" style={{ color: c.accent }}>
                     <div className="text-xs font-bold uppercase tracking-widest mb-6 opacity-50">{c.tag}</div>
                     <h3 className="text-2xl font-black mb-2">{c.title}</h3>
-                    <div className="text-5xl font-black mb-1" style={{ color: c.bg === "#FEEB19" ? "#000" : "#FEEB19" }}>
+                    <div className="text-5xl font-black mb-1" style={{ color: c.resultColor }}>
                       {c.result}
                     </div>
-                    <p className="text-sm leading-relaxed mt-4 mb-6" style={{ opacity: 0.55 }}>{c.desc}</p>
+                    <p className="text-sm leading-relaxed mt-4 mb-6" style={{ opacity: 0.6 }}>{c.desc}</p>
                     <div
                       className="flex gap-3 text-xs font-semibold pt-4 flex-wrap"
-                      style={{ borderTop: `1px solid ${c.bg === "#000" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`, opacity: 0.6 }}
+                      style={{ borderTop: `1px solid ${c.accent === "#ffffff" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`, opacity: 0.65 }}
                     >
                       <span>{c.budget}</span>
                       <span>·</span>
