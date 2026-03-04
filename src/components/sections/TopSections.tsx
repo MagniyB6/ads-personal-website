@@ -220,7 +220,7 @@ export function Hero() {
                 style={{ borderRadius: "20px", zIndex: 1, height: "520px" }}
               />
               <div
-                className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full whitespace-nowrap"
+                className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
                 style={{ zIndex: 2 }}
               >
                 Алексей Николотов
