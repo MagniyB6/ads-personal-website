@@ -1056,7 +1056,7 @@ function Footer() {
           alt="NikolotovADS"
           className="h-8 w-auto object-contain"
         />
-        <p className="text-gray-400">© 2025 · Специалист по контекстной и таргетированной рекламе</p>
+        <p className="text-gray-400">© 2025 · Алексей Николотов - Специалист по контекстной и таргетированной рекламе</p>
         <p className="text-gray-300 text-xs">Данные используются только для связи</p>
       </div>
     </footer>
