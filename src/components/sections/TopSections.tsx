@@ -237,7 +237,7 @@ export function Hero() {
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
             <div
-              className="tag mb-6"
+              className="tag mb-6 text-center md:text-left"
               style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}
             >алексей Николотов</div>
             <h1
