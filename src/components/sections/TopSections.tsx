@@ -236,10 +236,9 @@ export function Hero() {
       <div className="container-narrow w-full py-20">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <div
-              className="tag mb-6 text-center md:text-left"
-              style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}
-            >алексей Николотов</div>
+            <div className="text-center" style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}>
+              <span className="tag mb-6">алексей Николотов</span>
+            </div>
             <h1
               className="hero-title text-left px-0 mx-0 my-0 py-0 text-3xl md:text-5xl"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.25s ease-out forwards" }}
