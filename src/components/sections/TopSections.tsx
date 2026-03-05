@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Icon from "@/components/ui/icon";
 import {
   Carousel,
@@ -13,6 +13,71 @@ const PHOTO_URL =
   "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/1d27eeac-7db6-458f-b2bf-43ffdf5d69a8.png";
 
 export const TG_LINK = "http://t.me/Niggalotov";
+
+function Photo3D() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rotateRef = useRef({ x: 0, y: 0 });
+  const rafRef = useRef<number>(0);
+  const currentRef = useRef({ x: 0, y: 0 });
+  const isHovered = useRef(false);
+
+  const animate = () => {
+    const target = isHovered.current ? rotateRef.current : { x: 0, y: 0 };
+    currentRef.current.x += (target.x - currentRef.current.x) * 0.1;
+    currentRef.current.y += (target.y - currentRef.current.y) * 0.1;
+    if (containerRef.current) {
+      containerRef.current.style.transform = `perspective(900px) rotateX(${currentRef.current.x}deg) rotateY(${currentRef.current.y}deg)`;
+    }
+    rafRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    rotateRef.current = { x: -dy * 14, y: dx * 14 };
+  };
+
+  return (
+    <div
+      style={{ perspective: "900px" }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => { isHovered.current = true; }}
+      onMouseLeave={() => { isHovered.current = false; }}
+    >
+      <div
+        ref={containerRef}
+        style={{ transformStyle: "preserve-3d", willChange: "transform", transition: "none" }}
+      >
+        <div className="relative">
+          <div
+            className="absolute -inset-3 rounded-3xl"
+            style={{ background: "#FEEB19", zIndex: 0, transform: "translateZ(-20px)" }}
+          />
+          <img
+            src={PHOTO_URL}
+            alt="Алексей Николотов"
+            className="relative w-72 md:w-[420px] object-cover object-top"
+            style={{ borderRadius: "20px", zIndex: 1, height: "520px", transform: "translateZ(0px)" }}
+          />
+          <div
+            className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
+            style={{ zIndex: 2, transform: "translateZ(30px)" }}
+          >
+            Алексей Николотов
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export const VK_LINK = "https://vk.com/niggalotovads";
 
 export const ymGoal = (goal: string) => {
@@ -208,24 +273,7 @@ export function Hero() {
             className="flex justify-center md:justify-end"
             style={{ opacity: 0, animation: "fade-in 0.9s 0.4s ease-out forwards" }}
           >
-            <div className="relative">
-              <div
-                className="absolute -inset-3 rounded-3xl"
-                style={{ background: "#FEEB19", zIndex: 0 }}
-              />
-              <img
-                src={PHOTO_URL}
-                alt="Алексей Николотов"
-                className="relative w-72 md:w-[420px] object-cover object-top"
-                style={{ borderRadius: "20px", zIndex: 1, height: "520px" }}
-              />
-              <div
-                className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
-                style={{ zIndex: 2 }}
-              >
-                Алексей Николотов
-              </div>
-            </div>
+            <Photo3D />
           </div>
         </div>
       </div>
