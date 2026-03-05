@@ -69,7 +69,7 @@ function Photo3D() {
           />
           <div
             className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
-            style={{ zIndex: 2, transform: "translateZ(30px)" }}
+            style={{ zIndex: 2, transform: "translateX(-50%) translateZ(30px)" }}
           >
             Алексей Николотов
           </div>
