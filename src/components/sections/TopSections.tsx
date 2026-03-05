@@ -241,7 +241,7 @@ export function Hero() {
               style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}
             >алексей Николотов</div>
             <h1
-              className="hero-title text-left px-0 mx-0 my-0 py-0 text-5xl"
+              className="hero-title text-left px-0 mx-0 my-0 py-0 text-3xl md:text-5xl"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.25s ease-out forwards" }}
             >Специалист по контекстной и таргетированной рекламе</h1>
             <div
