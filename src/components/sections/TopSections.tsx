@@ -68,7 +68,7 @@ function Photo3D() {
             style={{ borderRadius: "20px", zIndex: 1, height: "520px", transform: "translateZ(0px)" }}
           />
           <div
-            className="absolute -bottom-4 left-0 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
+            className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black text-white text-base font-bold px-6 py-3 rounded-full whitespace-nowrap"
             style={{ zIndex: 2 }}
           >
             Алексей Николотов
@@ -236,7 +236,7 @@ export function Hero() {
       <div className="container-narrow w-full py-20">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="text-center" style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}>
+            <div className="text-left" style={{ opacity: 0, animation: "fade-up 0.6s 0.1s ease-out forwards" }}>
               <span className="tag mb-6">алексей Николотов</span>
             </div>
             <h1
