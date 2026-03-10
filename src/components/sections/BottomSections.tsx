@@ -455,9 +455,9 @@ export function Footer() {
     <footer className="py-8 bg-white" style={{ borderTop: "1px solid #f0f0f0" }}>
       <div className="container-narrow flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
         <img
-          src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/dd45e3fd-28fc-47b2-985a-e7d2baded4ea.png"
+          src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/8e5fadfb-a0c9-4ba6-a4dd-0c37e4ef586a.jpg"
           alt="NikolotovADS"
-          className="h-8 w-auto object-contain"
+          className="h-12 w-auto object-contain"
         />
         <p className="text-gray-400">© 2026 · Алексей Николотов - Специалист по контекстной и таргетированной рекламе</p>
         <p className="text-gray-300 text-xs">Данные используются только для связи</p>

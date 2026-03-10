@@ -191,7 +191,7 @@ export function Navbar() {
           <img
             src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/8e5fadfb-a0c9-4ba6-a4dd-0c37e4ef586a.jpg"
             alt="NikolotovADS"
-            className="h-10 w-auto object-contain"
+            className="h-14 w-auto object-contain"
           />
         </a>
         <nav className="hidden md:flex items-center gap-8">
