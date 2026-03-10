@@ -189,7 +189,7 @@ export function Navbar() {
       <div className="container-narrow flex items-center justify-between h-16 md:h-20">
         <a href="#" className="flex items-center">
           <img
-            src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/dd45e3fd-28fc-47b2-985a-e7d2baded4ea.png"
+            src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/8e5fadfb-a0c9-4ba6-a4dd-0c37e4ef586a.jpg"
             alt="NikolotovADS"
             className="h-10 w-auto object-contain"
           />
