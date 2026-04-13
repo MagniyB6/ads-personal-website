@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import { TG_LINK, VK_LINK, ymGoal } from "./TopSections";
+import MessengerPicker from "@/components/MessengerPicker";
 
 export function Reviews() {
   const reviews = [
@@ -357,6 +358,9 @@ export function Bonuses() {
 }
 
 export function Contacts() {
+  const [showPicker, setShowPicker] = useState(false);
+  const writeBtnRef = useRef<HTMLButtonElement>(null);
+
   const socials = [
     { icon: "Phone", label: "Телефон", handle: "+7 (999) 446-25-39", href: "tel:+79994462539" },
     { icon: "Send", label: "Telegram", handle: "@Niggalotov", href: TG_LINK },
@@ -374,7 +378,7 @@ export function Contacts() {
               <span className="yellow-line">запуску?</span>
             </h2>
             <p className="text-gray-500 text-lg leading-relaxed mb-10">
-              Напишите мне — обсудим задачу, расскажу как могу помочь и сделаю расчёт бюджета.
+              Свяжитесь со мной через мессенджеры или оставьте заявку на сайте
             </p>
             <div className="flex flex-col gap-4">
               {socials.map((s) => (
@@ -411,7 +415,7 @@ export function Contacts() {
             </p>
             <div className="flex flex-col gap-4 mb-10">
               {[
-                "Напишите в Telegram",
+                "Свяжитесь со мной через мессенджер",
                 "Расскажите о вашем проекте",
                 "Получите план и расчёт бюджета",
               ].map((step, i) => (
@@ -426,24 +430,31 @@ export function Contacts() {
                 </div>
               ))}
             </div>
-            <a
-              href={TG_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-black text-white font-bold py-4 px-8 rounded-lg transition-all w-full"
-              style={{ transition: "all 0.25s ease" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.background = "#fff";
-                (e.currentTarget as HTMLAnchorElement).style.color = "#000";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.background = "#000";
-                (e.currentTarget as HTMLAnchorElement).style.color = "#fff";
-              }}
-            >
-              <Icon name="MessageCircle" size={18} />
-              Написать сейчас
-            </a>
+            <div className="relative w-full">
+              <button
+                ref={writeBtnRef}
+                className="flex items-center justify-center gap-2 bg-black text-white font-bold py-4 px-8 rounded-lg transition-all w-full"
+                style={{ transition: "all 0.25s ease" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#fff";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#000";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#000";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+                }}
+                onClick={() => setShowPicker((v) => !v)}
+              >
+                <Icon name="MessageCircle" size={18} />
+                Написать сейчас
+              </button>
+              {showPicker && (
+                <MessengerPicker
+                  onClose={() => setShowPicker(false)}
+                  anchorRef={writeBtnRef as React.RefObject<HTMLElement>}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

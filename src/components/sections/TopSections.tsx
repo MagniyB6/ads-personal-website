@@ -204,7 +204,7 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
         </nav>
         <button
           className="hidden md:inline-flex btn-primary text-sm py-3 px-6"
-          onClick={() => { ymGoal("Переход Консультация"); onOpenChat(); }}
+          onClick={() => { ymGoal("Открыл консультацию с шапки"); onOpenChat(); }}
         >
           Консультация
         </button>
@@ -221,7 +221,7 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
           ))}
           <button
             className="btn-primary text-sm py-3 px-6 w-fit"
-            onClick={() => { ymGoal("Переход Консультация"); setMenuOpen(false); onOpenChat(); }}
+            onClick={() => { ymGoal("Открыл консультацию с шапки"); setMenuOpen(false); onOpenChat(); }}
           >
             Консультация
           </button>

@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import Icon from "@/components/ui/icon";
 import {
   Carousel,
@@ -7,6 +8,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { TG_LINK, VK_LINK, ymGoal } from "./TopSections";
+import MessengerPicker from "@/components/MessengerPicker";
 
 export function About() {
   return (
@@ -60,6 +62,9 @@ export function About() {
 }
 
 export function Services() {
+  const [showPicker, setShowPicker] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
   const services = [
     {
       icon: "Zap",
@@ -135,10 +140,22 @@ export function Services() {
           ))}
         </div>
         <div className="mt-12 text-center animate-on-scroll">
-          <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary" onClick={() => ymGoal("Переход в Телеграм")}>
-            <Icon name="MessageCircle" size={18} />
-            Обсудить проект
-          </a>
+          <div className="relative inline-block">
+            <button
+              ref={btnRef}
+              className="btn-primary"
+              onClick={() => setShowPicker((v) => !v)}
+            >
+              <Icon name="MessageCircle" size={18} />
+              Обсудить проект
+            </button>
+            {showPicker && (
+              <MessengerPicker
+                onClose={() => setShowPicker(false)}
+                anchorRef={btnRef as React.RefObject<HTMLElement>}
+              />
+            )}
+          </div>
         </div>
       </div>
     </section>
