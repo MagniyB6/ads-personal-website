@@ -113,8 +113,9 @@ def handler(event: dict, context) -> dict:
         )
         try:
             send_telegram(token, chat_id, msg)
-        except Exception:
-            pass
+            print(f"[TG] OK sent to chat_id={chat_id}")
+        except Exception as e:
+            print(f"[TG] ERROR: {e}, chat_id={chat_id}, token_prefix={token[:10]}")
 
     return {
         "statusCode": 200,
