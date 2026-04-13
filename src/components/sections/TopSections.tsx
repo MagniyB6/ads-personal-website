@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Icon from "@/components/ui/icon";
 import ChatBot from "@/components/ChatBot";
+import MessengerPicker from "@/components/MessengerPicker";
 import {
   Carousel,
   CarouselContent,
@@ -232,6 +233,9 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
 }
 
 export function Hero() {
+  const [showPicker, setShowPicker] = useState(false);
+  const writeBtnRef = useRef<HTMLButtonElement>(null);
+
   return (
     <section id="home" className="min-h-screen flex items-center pt-20 bg-white">
       <div className="container-narrow w-full py-20">
@@ -257,10 +261,22 @@ export function Hero() {
               className="flex flex-wrap gap-4"
               style={{ opacity: 0, animation: "fade-up 0.7s 0.55s ease-out forwards" }}
             >
-              <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary" onClick={() => ymGoal("Переход в Телеграм")}>
-                <Icon name="MessageCircle" size={18} />
-                Написать в Telegram
-              </a>
+              <div className="relative">
+                <button
+                  ref={writeBtnRef}
+                  className="btn-primary"
+                  onClick={() => setShowPicker((v) => !v)}
+                >
+                  <Icon name="MessageCircle" size={18} />
+                  Написать
+                </button>
+                {showPicker && (
+                  <MessengerPicker
+                    onClose={() => setShowPicker(false)}
+                    anchorRef={writeBtnRef as React.RefObject<HTMLElement>}
+                  />
+                )}
+              </div>
               <a href="#cases" className="btn-outline">
                 Смотреть кейсы
               </a>
