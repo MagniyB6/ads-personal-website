@@ -358,6 +358,7 @@ export function Bonuses() {
 
 export function Contacts() {
   const socials = [
+    { icon: "Phone", label: "Телефон", handle: "+8 (999) 446-25-39", href: "tel:+89994462539" },
     { icon: "Send", label: "Telegram", handle: "@Niggalotov", href: TG_LINK },
     { icon: "Users", label: "ВКонтакте", handle: "vk.com/niggalotovads", href: VK_LINK },
   ];
