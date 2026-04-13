@@ -193,7 +193,6 @@ export default function ChatBot({ open, onClose }: Props) {
     } else if (stage === "messenger_choice") {
       const finalAnswers = { ...answers, messenger: option };
       setAnswers(finalAnswers);
-      addUserMessage(option);
       setStage("done");
       await addBotMessage("Спасибо! Я скоро свяжусь с вами и подготовлю персональную стратегию. До встречи! 🚀", 900);
       window.ym?.(97865261, "reachGoal", "Chat_Bot_Order");
