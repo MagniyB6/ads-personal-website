@@ -186,7 +186,7 @@ export default function ChatBot({ open, onClose }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(finalAnswers),
         });
-      } catch (_) {}
+      } catch (_e) { /* silent */ }
       setSending(false);
     }
   };
@@ -247,9 +247,9 @@ export default function ChatBot({ open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:p-6 pointer-events-none">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 w-full max-w-sm">
       <div
-        className="pointer-events-auto flex flex-col bg-white rounded-2xl shadow-2xl w-full max-w-sm"
+        className="flex flex-col bg-white rounded-2xl shadow-2xl w-full"
         style={{
           height: "min(620px, 90vh)",
           border: "1px solid #e5e7eb",
