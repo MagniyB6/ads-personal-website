@@ -14,10 +14,13 @@ const TelegramIcon = () => (
 );
 
 const MaxIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="12" fill="#0077FF" />
-    <text x="4" y="16.5" fontSize="11" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">MAX</text>
-  </svg>
+  <img
+    src="https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/fb315558-936a-47de-84c3-674c94e060a1.png"
+    width={22}
+    height={22}
+    alt="MAX"
+    style={{ borderRadius: "50%" }}
+  />
 );
 
 interface Props {
