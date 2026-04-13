@@ -3,6 +3,23 @@ import Icon from "@/components/ui/icon";
 
 const LEADS_URL = "https://functions.poehali.dev/78260252-815a-46d9-9594-6898000ca410";
 
+function getUtm() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    utm_source: p.get("utm_source") || sessionStorage.getItem("utm_source") || "",
+    utm_campaign: p.get("utm_campaign") || sessionStorage.getItem("utm_campaign") || "",
+    utm_group: p.get("utm_content") || sessionStorage.getItem("utm_group") || "",
+  };
+}
+
+// Сохраняем UTM при первом заходе на страницу
+if (typeof window !== "undefined") {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("utm_source")) sessionStorage.setItem("utm_source", p.get("utm_source")!);
+  if (p.get("utm_campaign")) sessionStorage.setItem("utm_campaign", p.get("utm_campaign")!);
+  if (p.get("utm_content")) sessionStorage.setItem("utm_group", p.get("utm_content")!);
+}
+
 interface Message {
   id: number;
   from: "bot" | "user";
@@ -185,7 +202,7 @@ export default function ChatBot({ open, onClose }: Props) {
         await fetch(LEADS_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalAnswers),
+          body: JSON.stringify({ ...finalAnswers, ...getUtm() }),
         });
       } catch (_e) { /* silent */ }
       setSending(false);

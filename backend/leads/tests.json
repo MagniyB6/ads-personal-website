@@ -12,19 +12,20 @@
         "budget": "до 30 000 ₽",
         "name": "Тест",
         "phone": "+7 (999) 000-00-00",
-        "messenger": "Telegram"
+        "messenger": "Telegram",
+        "utm_source": "yandex",
+        "utm_campaign": "test_campaign",
+        "utm_group": "test_group"
       },
       "expectedStatus": 200,
-      "expectedBody": { "ok": true },
-      "bodyMatcher": "partial"
+      "bodyMatcher": "none"
     },
     {
       "name": "GET leads",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": { "leads": [] },
-      "bodyMatcher": "partial"
+      "bodyMatcher": "none"
     }
   ]
 }

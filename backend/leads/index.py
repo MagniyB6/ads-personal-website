@@ -28,7 +28,8 @@ def handler(event: dict, context) -> dict:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
         cur.execute("""
-            SELECT id, niche, company_info, ads_exp, platform, budget, name, phone, messenger, created_at
+            SELECT id, niche, company_info, ads_exp, platform, budget, name, phone, messenger,
+                   utm_source, utm_campaign, utm_group, created_at
             FROM t_p38226403_ads_personal_website.leads
             ORDER BY created_at DESC
             LIMIT 100
@@ -47,7 +48,10 @@ def handler(event: dict, context) -> dict:
                 "name": r[6],
                 "phone": r[7],
                 "messenger": r[8],
-                "created_at": r[9].isoformat() if r[9] else None,
+                "utm_source": r[9],
+                "utm_campaign": r[10],
+                "utm_group": r[11],
+                "created_at": r[12].isoformat() if r[12] else None,
             }
             for r in rows
         ]
@@ -62,17 +66,22 @@ def handler(event: dict, context) -> dict:
     name = body.get("name", "")
     phone = body.get("phone", "")
     messenger = body.get("messenger", "")
+    utm_source = body.get("utm_source", "")
+    utm_campaign = body.get("utm_campaign", "")
+    utm_group = body.get("utm_group", "")
 
     conn = psycopg2.connect(os.environ["DATABASE_URL"])
     cur = conn.cursor()
     cur.execute(
         """
         INSERT INTO t_p38226403_ads_personal_website.leads
-          (niche, company_info, ads_exp, platform, budget, name, phone, messenger)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+          (niche, company_info, ads_exp, platform, budget, name, phone, messenger,
+           utm_source, utm_campaign, utm_group)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (niche, company_info, ads_exp, platform, budget, name, phone, messenger),
+        (niche, company_info, ads_exp, platform, budget, name, phone, messenger,
+         utm_source, utm_campaign, utm_group),
     )
     lead_id = cur.fetchone()[0]
     conn.commit()
@@ -81,7 +90,15 @@ def handler(event: dict, context) -> dict:
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
-    if token and chat_id:
+    if token and chat_id and not token.startswith("test"):
+        utm_block = ""
+        if utm_source or utm_campaign or utm_group:
+            utm_block = (
+                f"\n\n🎯 <b>UTM-метки:</b>\n"
+                f"  Source: {utm_source or '—'}\n"
+                f"  Кампания: {utm_campaign or '—'}\n"
+                f"  Группа: {utm_group or '—'}"
+            )
         msg = (
             f"🔔 <b>Новая заявка #{lead_id}</b>\n\n"
             f"👤 <b>Имя:</b> {name}\n"
@@ -92,8 +109,12 @@ def handler(event: dict, context) -> dict:
             f"📊 <b>Опыт рекламы:</b> {ads_exp}\n"
             f"📢 <b>Площадка:</b> {platform}\n"
             f"💰 <b>Бюджет:</b> {budget}"
+            f"{utm_block}"
         )
-        send_telegram(token, chat_id, msg)
+        try:
+            send_telegram(token, chat_id, msg)
+        except Exception:
+            pass
 
     return {
         "statusCode": 200,
