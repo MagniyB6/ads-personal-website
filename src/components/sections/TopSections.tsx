@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Icon from "@/components/ui/icon";
+import ChatBot from "@/components/ChatBot";
 import {
   Carousel,
   CarouselContent,
@@ -160,6 +161,7 @@ export function CookieBanner() {
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -201,15 +203,12 @@ export function Navbar() {
             </a>
           ))}
         </nav>
-        <a
-          href={TG_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
           className="hidden md:inline-flex btn-primary text-sm py-3 px-6"
-          onClick={() => ymGoal("Переход Консультация")}
+          onClick={() => { ymGoal("Переход Консультация"); setChatOpen(true); }}
         >
           Консультация
-        </a>
+        </button>
         <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
           <Icon name={menuOpen ? "X" : "Menu"} size={22} />
         </button>
@@ -221,11 +220,15 @@ export function Navbar() {
               {l.label}
             </a>
           ))}
-          <a href={TG_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm py-3 px-6 w-fit" onClick={() => ymGoal("Переход Консультация")}>
+          <button
+            className="btn-primary text-sm py-3 px-6 w-fit"
+            onClick={() => { ymGoal("Переход Консультация"); setMenuOpen(false); setChatOpen(true); }}
+          >
             Консультация
-          </a>
+          </button>
         </div>
       )}
+      <ChatBot open={chatOpen} onClose={() => setChatOpen(false)} />
     </header>
   );
 }
@@ -262,6 +265,10 @@ export function Hero() {
               </a>
               <a href="#cases" className="btn-outline">
                 Смотреть кейсы
+              </a>
+              <a href="tel:+79994462539" className="btn-outline flex items-center gap-2">
+                <Icon name="Phone" size={18} />
+                Позвонить
               </a>
             </div>
           </div>
