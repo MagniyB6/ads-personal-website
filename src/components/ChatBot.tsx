@@ -35,7 +35,7 @@ const BUDGET_OPTIONS = [
   "150 000+ ₽",
   "Затрудняюсь, нужна помощь",
 ];
-const MESSENGER_OPTIONS = ["Telegram", "WhatsApp", "ВКонтакте", "Позвоните мне"];
+const MESSENGER_OPTIONS = ["Telegram", "MAX", "ВКонтакте", "Позвоните мне"];
 
 type Stage =
   | "greeting"
@@ -179,6 +179,7 @@ export default function ChatBot({ open, onClose }: Props) {
       addUserMessage(option);
       setStage("done");
       await addBotMessage("Спасибо! Я скоро свяжусь с вами и подготовлю персональную стратегию. До встречи! 🚀", 900);
+      window.ym?.(97865261, "reachGoal", "Chat_Bot_Order");
       setSending(true);
       try {
         await fetch(LEADS_URL, {

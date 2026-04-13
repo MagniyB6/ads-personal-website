@@ -49,7 +49,7 @@ export default function Index() {
       {/* Кнопка-пузырь */}
       {!chatOpen && (
         <button
-          onClick={() => setChatOpen(true)}
+          onClick={() => { setChatOpen(true); window.ym?.(97865261, "reachGoal", "Chat_Bot_Open"); }}
           className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
           style={{ background: "#FEEB19" }}
           aria-label="Открыть чат"
