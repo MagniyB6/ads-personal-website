@@ -266,7 +266,7 @@ export function Hero() {
               <a href="#cases" className="btn-outline">
                 Смотреть кейсы
               </a>
-              <a href="tel:+79994462539" className="btn-outline flex items-center gap-2">
+              <a href="tel:+79994462539" className="btn-primary flex items-center gap-2">
                 <Icon name="Phone" size={18} />
                 Позвонить
               </a>

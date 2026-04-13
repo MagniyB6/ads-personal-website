@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "POST lead",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "niche": "Услуги",
+        "company_info": "test.ru",
+        "ads_exp": "Нет, хочу начать",
+        "platform": "Яндекс Директ",
+        "budget": "до 30 000 ₽",
+        "name": "Тест",
+        "phone": "+7 (999) 000-00-00",
+        "messenger": "Telegram"
+      },
+      "expectedStatus": 200,
+      "expectedBody": { "ok": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET leads",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": { "leads": [] },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
