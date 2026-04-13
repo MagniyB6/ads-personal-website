@@ -158,10 +158,9 @@ export function CookieBanner() {
   );
 }
 
-export function Navbar() {
+export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -205,7 +204,7 @@ export function Navbar() {
         </nav>
         <button
           className="hidden md:inline-flex btn-primary text-sm py-3 px-6"
-          onClick={() => { ymGoal("Переход Консультация"); setChatOpen(true); }}
+          onClick={() => { ymGoal("Переход Консультация"); onOpenChat(); }}
         >
           Консультация
         </button>
@@ -222,13 +221,12 @@ export function Navbar() {
           ))}
           <button
             className="btn-primary text-sm py-3 px-6 w-fit"
-            onClick={() => { ymGoal("Переход Консультация"); setMenuOpen(false); setChatOpen(true); }}
+            onClick={() => { ymGoal("Переход Консультация"); setMenuOpen(false); onOpenChat(); }}
           >
             Консультация
           </button>
         </div>
       )}
-      <ChatBot open={chatOpen} onClose={() => setChatOpen(false)} />
     </header>
   );
 }
