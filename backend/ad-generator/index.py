@@ -7,6 +7,8 @@ import urllib.request
 _usage: dict = {}
 DAILY_LIMIT = 5
 
+GEN_API_URL = "https://proxy.gen-api.ru/v1/chat/completions"
+
 
 def get_ip_key(ip: str) -> str:
     today = time.strftime("%Y-%m-%d")
@@ -14,7 +16,7 @@ def get_ip_key(ip: str) -> str:
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует рекламные объявления для Яндекс Директ через Anthropic Claude."""
+    """Генерирует рекламные объявления для Яндекс Директ через gen-api.ru (GPT-4 Turbo)."""
 
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
@@ -71,20 +73,22 @@ def handler(event: dict, context) -> dict:
 
 Без пояснений, без markdown, только JSON."""
 
-    api_key = os.environ["ANTHROPIC_API_KEY"]
+    api_key = os.environ["OPENAI_API_KEY"]
     payload = json.dumps({
-        "model": "claude-haiku-4-5",
-        "max_tokens": 300,
+        "model": "chat-gpt-4-turbo",
         "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 300,
+        "temperature": 0.7,
+        "is_sync": True,
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        GEN_API_URL,
         data=payload,
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         },
         method="POST",
     )
@@ -92,7 +96,7 @@ def handler(event: dict, context) -> dict:
     with urllib.request.urlopen(req) as resp:
         resp_data = json.loads(resp.read().decode("utf-8"))
 
-    raw = resp_data["content"][0]["text"].strip()
+    raw = resp_data["choices"][0]["message"]["content"].strip()
 
     if raw.startswith("```"):
         raw = raw.split("```")[1]
