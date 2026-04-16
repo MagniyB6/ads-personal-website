@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import NotFound404 from "./pages/NotFound404";
 import Useful from "./pages/Useful";
 import UsefulYandex from "./pages/UsefulYandex";
+import UsefulArticle from "./pages/UsefulArticle";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/useful" element={<Useful />} />
           <Route path="/useful/yandex" element={<UsefulYandex />} />
+          <Route path="/useful/article/:slug" element={<UsefulArticle />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>
