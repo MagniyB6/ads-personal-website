@@ -1,10 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
 const ARTICLE_IMAGE = "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/d1ccf348-9075-46f2-ad88-dc6de2e3e883.png";
 
-const articles = [
+type ContentBlock =
+  | { type: "text"; value: string; items?: never; href?: never; label?: never }
+  | { type: "list"; items: string[]; value?: never; href?: never; label?: never }
+  | { type: "code"; value: string; items?: never; href?: never; label?: never }
+  | { type: "link"; label: string; href: string; value?: never; items?: never };
+
+type Article = {
+  id: number;
+  title: string;
+  image: string;
+  date: string;
+  tag: string;
+  content: ContentBlock[];
+};
+
+const articles: Article[] = [
   {
     id: 1,
     title: "Как добавить HTML5 для Яндекс Директа через Google Web Designer",
@@ -39,6 +54,7 @@ const articles = [
 export default function Useful() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
   const [vkToast, setVkToast] = useState(false);
+  const [openArticle, setOpenArticle] = useState<number | null>(null);
 
   const handleVkClick = () => {
     setVkToast(true);
@@ -97,11 +113,17 @@ export default function Useful() {
           </button>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-black">Статьи</h2>
+          <span className="text-sm text-gray-400">{articles.length} материал{articles.length !== 1 ? "а" : ""}</span>
         </div>
+
+        <ArticleCarousel
+          articles={articles}
+          openArticle={openArticle}
+          onOpen={setOpenArticle}
+          onClose={() => setOpenArticle(null)}
+        />
       </main>
 
       {vkToast && (
@@ -114,54 +136,143 @@ export default function Useful() {
   );
 }
 
-function ArticleCard({ article }: { article: (typeof articles)[0] }) {
+function ArticleCarousel({
+  articles,
+  openArticle,
+  onOpen,
+  onClose,
+}: {
+  articles: Article[];
+  openArticle: number | null;
+  onOpen: (id: number) => void;
+  onClose: () => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
+  };
+
   return (
-    <article className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      <div className="relative h-52 overflow-hidden bg-gray-50">
-        <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
-        <span className="absolute top-4 left-4 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>
+    <div className="relative">
+      {articles.length > 1 && (
+        <>
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 transition-colors"
+          >
+            <Icon name="ChevronLeft" size={18} />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 transition-colors"
+          >
+            <Icon name="ChevronRight" size={18} />
+          </button>
+        </>
+      )}
+
+      <div
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {articles.map((article) => (
+          <ArticlePreviewCard
+            key={article.id}
+            article={article}
+            isOpen={openArticle === article.id}
+            onOpen={() => onOpen(article.id)}
+            onClose={onClose}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ArticlePreviewCard({
+  article,
+  isOpen,
+  onOpen,
+  onClose,
+}: {
+  article: Article;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
+  if (isOpen) {
+    return (
+      <div className="w-full shrink-0 snap-start rounded-2xl border border-gray-200 overflow-hidden shadow-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>{article.tag}</span>
+            <span className="text-xs text-gray-400">{article.date}</span>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
+            <Icon name="X" size={18} />
+          </button>
+        </div>
+        <div className="p-6 md:p-8">
+          <h2 className="text-xl font-bold text-black leading-snug mb-6">{article.title}</h2>
+          <div className="flex flex-col gap-4 text-sm text-gray-700 leading-relaxed">
+            {article.content.map((block, i) => {
+              if (block.type === "text") return <p key={i}>{block.value}</p>;
+              if (block.type === "list" && block.items) {
+                return (
+                  <ol key={i} className="flex flex-col gap-2 pl-1">
+                    {block.items.map((item, j) => (
+                      <li key={j} className="flex gap-2">
+                        <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#FEEB19", color: "#000" }}>{j + 1}</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ol>
+                );
+              }
+              if (block.type === "code") {
+                return (
+                  <pre key={i} className="bg-gray-900 text-green-400 rounded-xl p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                    {block.value}
+                  </pre>
+                );
+              }
+              if (block.type === "link") {
+                return (
+                  <a key={i} href={block.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-semibold underline underline-offset-4 hover:opacity-70 transition-opacity" style={{ color: "#000" }}>
+                    <Icon name="Youtube" size={16} />
+                    {block.label}
+                  </a>
+                );
+              }
+              return null;
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={onOpen}
+      className="w-72 md:w-80 shrink-0 snap-start rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow text-left group"
+    >
+      <div className="relative h-44 overflow-hidden bg-gray-50">
+        <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        <span className="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>
           {article.tag}
         </span>
       </div>
-
-      <div className="p-6 md:p-8">
-        <p className="text-xs text-gray-400 mb-3">{article.date}</p>
-        <h2 className="text-xl font-bold text-black leading-snug mb-5">{article.title}</h2>
-
-        <div className="flex flex-col gap-4 text-sm text-gray-700 leading-relaxed">
-          {article.content.map((block, i) => {
-            if (block.type === "text") return <p key={i}>{block.value}</p>;
-            if (block.type === "list" && block.items) {
-              return (
-                <ol key={i} className="flex flex-col gap-2 pl-1">
-                  {block.items.map((item, j) => (
-                    <li key={j} className="flex gap-2">
-                      <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#FEEB19", color: "#000" }}>{j + 1}</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ol>
-              );
-            }
-            if (block.type === "code") {
-              return (
-                <pre key={i} className="bg-gray-900 text-green-400 rounded-xl p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                  {block.value}
-                </pre>
-              );
-            }
-            if (block.type === "link") {
-              return (
-                <a key={i} href={block.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-semibold underline underline-offset-4 hover:opacity-70 transition-opacity" style={{ color: "#000" }}>
-                  <Icon name="Youtube" size={16} />
-                  {block.label}
-                </a>
-              );
-            }
-            return null;
-          })}
-        </div>
+      <div className="p-5">
+        <p className="text-xs text-gray-400 mb-2">{article.date}</p>
+        <h3 className="text-sm font-bold text-black leading-snug mb-4 line-clamp-3">{article.title}</h3>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-black">
+          Читать статью <Icon name="ArrowRight" size={13} />
+        </span>
       </div>
-    </article>
+    </button>
   );
 }
