@@ -284,10 +284,10 @@ function ArticlePreviewCard({
   return (
     <button
       onClick={onOpen}
-      className="w-72 md:w-80 shrink-0 snap-start rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow text-left group"
+      className="w-72 md:w-80 shrink-0 snap-start rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 text-left group"
     >
       <div className="relative h-44 overflow-hidden bg-gray-50">
-        <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
         <span className="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>
           {article.tag}
         </span>
