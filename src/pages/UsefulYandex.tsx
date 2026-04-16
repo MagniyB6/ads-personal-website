@@ -22,8 +22,54 @@ const DSP_SITES = [
   "dsp-huawei.yandex.ru",
 ];
 
-const RSY_SECTIONS = [
-  { id: "dsp", label: "DSP площадки", icon: "List", sites: DSP_SITES },
+const GAME_SITES = [
+  "ru.thousandcardgame.android",
+  "com.diamonds.expert.game",
+  "game.yandex.ru",
+  "grill.sort.food.games.match.puzzle",
+  "com.KGames.InifinityRun",
+  "tower.defense.ant.conquer.games",
+  "sorting.games.goods.sort.triple.match3d.puzzle.stuff",
+  "com.tgames.line98classic",
+  "com.sorting.games.match3d.goods.triple.puzzle",
+  "com.openmygame.games.android.wordsearchsea",
+  "com.openmygame.magicwordsearch",
+  "com.cloudycastlegames.wordline",
+  "com.openmygame.games.android.wordpizza",
+  "com.gamebrain.hexasort",
+  "games.vaveda.militaryoverturn",
+  "and.matchgames.zenblossom",
+  "org.aastudio.games.longnards",
+  "azurgames.idle.war",
+  "com.easybrain.number.puzzle.game",
+];
+
+type Section = {
+  id: string;
+  label: string;
+  icon: string;
+  sites: string[];
+  note?: string;
+  downloadUrl?: string;
+  downloadTotal?: number;
+};
+
+const RSY_SECTIONS: Section[] = [
+  {
+    id: "dsp",
+    label: "DSP площадки",
+    icon: "List",
+    sites: DSP_SITES,
+  },
+  {
+    id: "games",
+    label: "Игровые площадки",
+    icon: "Gamepad2",
+    sites: GAME_SITES,
+    note: "Не рекомендую удалять все игровые сразу — с некоторых могут приходить хорошие заявки",
+    downloadUrl: "https://drive.google.com/file/d/1btr_vRQ49x3nk98RIkmC-UpVTBCJyOYQ/view?usp=sharing",
+    downloadTotal: 2560,
+  },
 ];
 
 export default function UsefulYandex() {
@@ -57,7 +103,7 @@ export default function UsefulYandex() {
   );
 }
 
-function RsyBlock({ sections }: { sections: typeof RSY_SECTIONS }) {
+function RsyBlock({ sections }: { sections: Section[] }) {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -100,7 +146,7 @@ function SiteListSection({
   isActive,
   onToggle,
 }: {
-  section: (typeof RSY_SECTIONS)[0];
+  section: Section;
   isActive: boolean;
   onToggle: () => void;
 }) {
@@ -128,16 +174,35 @@ function SiteListSection({
 
       {isActive && (
         <div className="border-t border-gray-100">
-          <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
+          {section.note && (
+            <div className="flex items-start gap-2 px-5 py-3 bg-amber-50 border-b border-amber-100">
+              <Icon name="AlertTriangle" size={14} className="text-amber-500 shrink-0 mt-0.5" />
+              <span className="text-xs text-amber-700">{section.note}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100 gap-2 flex-wrap">
             <span className="text-xs text-gray-500 font-medium">Нажмите на домен, чтобы скопировать</span>
-            <button
-              onClick={handleCopyAll}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              style={{ background: copied ? "#22c55e" : "#FEEB19", color: "#000" }}
-            >
-              <Icon name={copied ? "Check" : "Copy"} size={13} />
-              {copied ? "Скопировано!" : "Копировать всё"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {section.downloadUrl && (
+                <a
+                  href={section.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 text-white hover:bg-gray-700 transition-colors"
+                >
+                  <Icon name="Download" size={13} />
+                  Скачать все ({section.downloadTotal?.toLocaleString("ru-RU")} площадок)
+                </a>
+              )}
+              <button
+                onClick={handleCopyAll}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{ background: copied ? "#22c55e" : "#FEEB19", color: "#000" }}
+              >
+                <Icon name={copied ? "Check" : "Copy"} size={13} />
+                {copied ? "Скопировано!" : "Копировать всё"}
+              </button>
+            </div>
           </div>
           <div className="max-h-72 overflow-y-auto">
             {section.sites.map((site, i) => (
