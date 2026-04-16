@@ -178,7 +178,7 @@ const VPN_SITES = [
   "com.free.vpn.proxy.master",
   "com.supervpn.vpn.free.proxy",
   "com.asinosoft.vpn",
-  "con.hotspot.vpn.free.master",
+  "com.hotspot.vpn.free.master",
   "com.fly.ultra.free.vpn.high",
   "octohide.vpn",
   "com.blue.shield.one.vpn",
