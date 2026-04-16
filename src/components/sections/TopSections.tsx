@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import ChatBot from "@/components/ChatBot";
 import MessengerPicker from "@/components/MessengerPicker";
@@ -179,6 +180,8 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
     { label: "Контакты", href: "#contacts" },
   ];
 
+  const navExtra = { label: "Полезное", to: "/useful" };
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
@@ -202,6 +205,9 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
               {l.label}
             </a>
           ))}
+          <Link to={navExtra.to} className="nav-link font-semibold" style={{ color: "#7c3aed" }}>
+            {navExtra.label}
+          </Link>
         </nav>
         <button
           className="hidden md:inline-flex btn-primary text-sm py-3 px-6"
@@ -220,6 +226,14 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
               {l.label}
             </a>
           ))}
+          <Link
+            to={navExtra.to}
+            className="text-base font-semibold"
+            style={{ color: "#7c3aed" }}
+            onClick={() => setMenuOpen(false)}
+          >
+            {navExtra.label}
+          </Link>
           <button
             className="btn-primary text-sm py-3 px-6 w-fit"
             onClick={() => { ymGoal("Открыл консультацию с шапки"); setMenuOpen(false); onOpenChat(); }}
