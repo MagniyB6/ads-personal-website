@@ -5,6 +5,14 @@ import Icon from "@/components/ui/icon";
 const DAILY_LIMIT = 5;
 const STORAGE_KEY = "vk_ad_generator_usage";
 
+type Tone = "neutral" | "friendly" | "aggressive";
+
+const TONES: { value: Tone; label: string; desc: string; emoji: string }[] = [
+  { value: "neutral", label: "Нейтральный", desc: "Чётко и по делу", emoji: "🎯" },
+  { value: "friendly", label: "Дружелюбный", desc: "Тепло и искренне", emoji: "😊" },
+  { value: "aggressive", label: "Агрессивный", desc: "Срочность и напор", emoji: "🔥" },
+];
+
 type VkAdResult = {
   title: string;
   short_desc: string;
@@ -63,6 +71,7 @@ export default function VkAdGenerator() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const [description, setDescription] = useState("");
+  const [tone, setTone] = useState<Tone>("neutral");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VkAdResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +105,7 @@ export default function VkAdGenerator() {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify({ description, tone }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -149,12 +158,35 @@ export default function VkAdGenerator() {
             rows={5}
             placeholder="Например: Фитнес-клуб в Москве. Акция — первый месяц за 990 рублей. Бассейн, тренажёрный зал, групповые занятия. Для тех, кто хочет начать заниматься спортом без больших вложений."
             className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder-gray-300 focus:outline-none resize-none disabled:opacity-50 transition"
-            style={{ outline: "none" }}
             onFocus={e => e.target.style.boxShadow = "0 0 0 2px #2688EB50"}
             onBlur={e => e.target.style.boxShadow = "none"}
           />
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="mt-4 mb-4">
+            <p className="text-xs font-bold text-black mb-2">Тон текста</p>
+            <div className="flex gap-2 flex-wrap">
+              {TONES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setTone(t.value)}
+                  disabled={limitReached || loading}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all disabled:opacity-40 ${
+                    tone === t.value
+                      ? "border-black bg-black text-white"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
+                  }`}
+                >
+                  <span>{t.emoji}</span>
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              {TONES.find(t => t.value === tone)?.desc}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <Icon name="Zap" size={13} />
               {limitReached
@@ -268,19 +300,9 @@ function VkAdField({
         </div>
       </div>
       {multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-          className={baseClass}
-        />
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={baseClass} />
       ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={baseClass}
-        />
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={baseClass} />
       )}
       {over && (
         <p className="text-xs text-red-500 mt-1 font-semibold">Превышен лимит на {value.length - max} символов</p>
