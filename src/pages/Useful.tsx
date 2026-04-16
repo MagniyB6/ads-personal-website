@@ -61,8 +61,8 @@ export default function Useful() {
       <main className="container-narrow py-12 md:py-20">
         <div className="mb-12">
           <span className="tag mb-4 inline-block">полезные материалы</span>
-          <h1 className="text-3xl md:text-5xl font-bold text-black leading-tight">Полезные статьи</h1>
-          <p className="text-gray-500 mt-4 text-lg max-w-xl">Делюсь опытом и решениями, которые сам прошёл в работе</p>
+          <h1 className="text-3xl md:text-5xl font-bold text-black leading-tight">Багаж знаний</h1>
+          <p className="text-gray-500 mt-4 text-lg max-w-xl">Делюсь опытом и решениями, которые сам прошёл в работе. Ниже вы увидите полезные статьи и собранные материалы по рекламным системам.</p>
         </div>
 
         <div className="flex flex-col gap-3 mb-12">
