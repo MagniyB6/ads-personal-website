@@ -213,10 +213,10 @@ export function Calculator() {
                   rel="noopener noreferrer"
                   className="mt-8 w-full flex items-center justify-center gap-2 py-4 font-bold text-black rounded-lg transition-all hover:opacity-90"
                   style={{ background: "#FEEB19" }}
-                  onClick={() => ymGoal("Переход в Телеграм")}
+                  onClick={() => { ymGoal("Переход в Телеграм"); ymGoal("Chat_Calculator"); }}
                 >
                   <Icon name="MessageCircle" size={18} />
-                  Обсудить в Telegram
+                  Проконсультироваться
                 </a>
               </div>
             ) : (
@@ -260,10 +260,10 @@ export function Calculator() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary justify-center w-full"
-                onClick={() => ymGoal("Переход в Телеграм")}
+                onClick={() => { ymGoal("Переход в Телеграм"); ymGoal("Chat_Calculator"); }}
               >
                 <Icon name="MessageCircle" size={18} />
-                Написать в Telegram
+                Проконсультироваться
               </a>
               <button
                 onClick={() => setShowConsult(false)}
