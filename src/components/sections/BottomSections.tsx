@@ -207,17 +207,14 @@ export function Calculator() {
                   </div>
                   <p className="text-white/25 text-xs mt-1">* Рекламный бюджет указан с учётом НДС 22%</p>
                 </div>
-                <a
-                  href={TG_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
                   className="mt-8 w-full flex items-center justify-center gap-2 py-4 font-bold text-black rounded-lg transition-all hover:opacity-90"
                   style={{ background: "#FEEB19" }}
-                  onClick={() => { ymGoal("Переход в Телеграм"); ymGoal("Chat_Calculator"); }}
+                  onClick={() => { ymGoal("Chat_Calculator"); window.dispatchEvent(new Event("open-chat")); }}
                 >
                   <Icon name="MessageCircle" size={18} />
                   Проконсультироваться
-                </a>
+                </button>
               </div>
             ) : (
               <div
@@ -255,16 +252,13 @@ export function Calculator() {
               я помогу определить реалистичный CPA для вашей ниши и рассчитаю бюджет.
             </p>
             <div className="flex flex-col gap-3">
-              <a
-                href={TG_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
                 className="btn-primary justify-center w-full"
-                onClick={() => { ymGoal("Переход в Телеграм"); ymGoal("Chat_Calculator"); }}
+                onClick={() => { ymGoal("Chat_Calculator"); window.dispatchEvent(new Event("open-chat")); setShowConsult(false); }}
               >
                 <Icon name="MessageCircle" size={18} />
                 Проконсультироваться
-              </a>
+              </button>
               <button
                 onClick={() => setShowConsult(false)}
                 className="text-gray-400 text-sm py-2 hover:text-black transition-colors"

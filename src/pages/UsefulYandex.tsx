@@ -3,12 +3,23 @@ import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
 const DSP_SITES = [
-  "dsp-mail-ru.yandex.ru", "dsp.yandex.ru", "dsp-unityads.yandex.ru",
-  "dsp-minimob-ww.yandex.ru", "dsp-yeahmobi.yandex.ru", "dsp-betweenx.yandex.ru",
-  "dsp-ironsource.yandex.ru", "dsp-inneractive.yandex.ru", "dsp-opera-exchange.yandex.ru",
-  "dsp-mintagral.yandex.ru", "dsp-xiaomi.yandex.ru", "dsp-start-io.yandex.ru",
-  "dsp-blueseax.yandex.ru", "dsp-webeye.yandex.ru", "dsp-transsion.yandex.ru",
-  "dsp-inmobi.yandex.ru", "dsp-huawei.yandex.ru", "droidspace.ru",
+  "dsp-mail-ru.yandex.ru",
+  "dsp.yandex.ru",
+  "dsp-unityads.yandex.ru",
+  "dsp-minimob-ww.yandex.ru",
+  "dsp-yeahmobi.yandex.ru",
+  "dsp-betweenx.yandex.ru",
+  "dsp-ironsource.yandex.ru",
+  "dsp-inneractive.yandex.ru",
+  "dsp-opera-exchange.yandex.ru",
+  "dsp-mintagral.yandex.ru",
+  "dsp-xiaomi.yandex.ru",
+  "dsp-start-io.yandex.ru",
+  "dsp-blueseax.yandex.ru",
+  "dsp-webeye.yandex.ru",
+  "dsp-transsion.yandex.ru",
+  "dsp-inmobi.yandex.ru",
+  "dsp-huawei.yandex.ru",
 ];
 
 const RSY_SECTIONS = [

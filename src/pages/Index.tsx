@@ -31,6 +31,12 @@ export default function Index() {
   useScrollAnimation();
   const [chatOpen, setChatOpen] = useState(false);
 
+  useEffect(() => {
+    const handler = () => setChatOpen(true);
+    window.addEventListener("open-chat", handler);
+    return () => window.removeEventListener("open-chat", handler);
+  }, []);
+
   return (
     <div className="font-golos">
       <CookieBanner />
