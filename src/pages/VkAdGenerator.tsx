@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
@@ -78,14 +78,7 @@ export default function VkAdGenerator() {
   const [usageCount, setUsageCount] = useState(getUsageToday());
   const [edited, setEdited] = useState<VkAdResult | null>(null);
 
-  const func2urlRef = useRef<Record<string, string> | null>(null);
-
-  const getUrl = async () => {
-    if (func2urlRef.current) return func2urlRef.current;
-    const res = await fetch("/func2url.json");
-    func2urlRef.current = await res.json();
-    return func2urlRef.current!;
-  };
+  const VK_AD_GENERATOR_URL = "https://functions.poehali.dev/5381338f-6c6e-47d3-9f91-2119349754f9";
 
   const generate = async () => {
     if (!description.trim()) {
@@ -100,9 +93,7 @@ export default function VkAdGenerator() {
     setEdited(null);
 
     try {
-      const urls = await getUrl();
-      const url = urls["vk-ad-generator"];
-      const res = await fetch(url, {
+      const res = await fetch(VK_AD_GENERATOR_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description, tone }),

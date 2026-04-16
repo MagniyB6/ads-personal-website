@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
@@ -77,14 +77,7 @@ export default function AdGenerator() {
   const [usageCount, setUsageCount] = useState(getUsageToday());
   const [edited, setEdited] = useState<AdResult | null>(null);
 
-  const func2urlRef = useRef<Record<string, string> | null>(null);
-
-  const getUrl = async () => {
-    if (func2urlRef.current) return func2urlRef.current;
-    const res = await fetch("/func2url.json");
-    func2urlRef.current = await res.json();
-    return func2urlRef.current!;
-  };
+  const AD_GENERATOR_URL = "https://functions.poehali.dev/707da4e5-4e61-4d9f-8f3b-cfce9a2df3db";
 
   const generate = async () => {
     if (!description.trim()) {
@@ -99,9 +92,7 @@ export default function AdGenerator() {
     setEdited(null);
 
     try {
-      const urls = await getUrl();
-      const url = urls["ad-generator"];
-      const res = await fetch(url, {
+      const res = await fetch(AD_GENERATOR_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description, tone }),
