@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Generate ad",
+      "method": "POST",
+      "path": "/",
+      "body": {"description": "Продаём пластиковые окна в Москве. Монтаж в день обращения. Гарантия 5 лет."},
+      "expectedStatus": 200,
+      "expectedBody": {"title1": "string", "title2": "string", "text": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Empty description",
+      "method": "POST",
+      "path": "/",
+      "body": {"description": ""},
+      "expectedStatus": 400
+    }
+  ]
+}

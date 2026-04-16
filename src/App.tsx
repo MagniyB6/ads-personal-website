@@ -10,6 +10,7 @@ import NotFound404 from "./pages/NotFound404";
 import Useful from "./pages/Useful";
 import UsefulYandex from "./pages/UsefulYandex";
 import UsefulArticle from "./pages/UsefulArticle";
+import AdGenerator from "./pages/AdGenerator";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/useful" element={<Useful />} />
           <Route path="/useful/yandex" element={<UsefulYandex />} />
           <Route path="/useful/article/:slug" element={<UsefulArticle />} />
+          <Route path="/useful/ad-generator" element={<AdGenerator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>

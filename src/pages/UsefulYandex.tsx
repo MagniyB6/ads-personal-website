@@ -28,6 +28,21 @@ export default function UsefulYandex() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <Link
+            to="/useful/ad-generator"
+            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            style={{ borderColor: "#FEEB19", background: "#FEEB1910" }}
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-2xl">✨</span>
+              <div>
+                <p className="font-bold text-black text-base">Генератор объявлений</p>
+                <p className="text-sm text-gray-500 mt-0.5">Опиши бизнес — ИИ составит заголовки и текст по требованиям Директа</p>
+              </div>
+            </div>
+            <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
+          </Link>
+
           <RsyBlock sections={RSY_SECTIONS} />
         </div>
       </main>
