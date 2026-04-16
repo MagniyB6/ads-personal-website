@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
 const ARTICLE_IMAGE = "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/d1ccf348-9075-46f2-ad88-dc6de2e3e883.png";
-const TRAFFIC_LIGHT_IMAGE = "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/d1ccf348-9075-46f2-ad88-dc6de2e3e883.png";
+const TRAFFIC_LIGHT_IMAGE = "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/444e0ed5-7d08-426c-99aa-cabe165bdc35.jpg";
 
 type ContentBlock =
   | { type: "text"; value: string; items?: never; href?: never; label?: never }
@@ -294,7 +294,13 @@ function ArticlePreviewCard({
       </div>
       <div className="p-5">
         <p className="text-xs text-gray-400 mb-2">{article.date}</p>
-        <h3 className="text-sm font-bold text-black leading-snug mb-4 line-clamp-3">{article.title}</h3>
+        <h3 className="text-sm font-bold text-black leading-snug mb-2 line-clamp-2">{article.title}</h3>
+        {(() => {
+          const first = article.content.find((b) => b.type === "text");
+          return first?.value ? (
+            <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-4">{first.value}</p>
+          ) : null;
+        })()}
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-black">
           Читать статью <Icon name="ArrowRight" size={13} />
         </span>
