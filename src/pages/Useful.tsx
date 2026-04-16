@@ -1,21 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 
 const ARTICLE_IMAGE = "https://cdn.poehali.dev/projects/d8daede3-cd33-47b5-afe6-fe49f35fc4fe/bucket/d1ccf348-9075-46f2-ad88-dc6de2e3e883.png";
-
-const DSP_SITES = [
-  "dsp-mail-ru.yandex.ru", "dsp.yandex.ru", "dsp-unityads.yandex.ru",
-  "dsp-minimob-ww.yandex.ru", "dsp-yeahmobi.yandex.ru", "dsp-betweenx.yandex.ru",
-  "dsp-ironsource.yandex.ru", "dsp-inneractive.yandex.ru", "dsp-opera-exchange.yandex.ru",
-  "dsp-mintagral.yandex.ru", "dsp-xiaomi.yandex.ru", "dsp-start-io.yandex.ru",
-  "dsp-blueseax.yandex.ru", "dsp-webeye.yandex.ru", "dsp-transsion.yandex.ru",
-  "dsp-inmobi.yandex.ru", "dsp-huawei.yandex.ru", "droidspace.ru",
-];
-
-const RSY_SECTIONS = [
-  { id: "dsp", label: "DSP площадки", sites: DSP_SITES },
-];
 
 const articles = [
   {
@@ -49,6 +36,16 @@ const articles = [
   },
 ];
 
+const SECTIONS = [
+  {
+    to: "/useful/yandex",
+    label: "Яндекс",
+    description: "Площадки РСЯ, исключения и другие полезности",
+    icon: "🟡",
+    border: "#FEEB19",
+  },
+];
+
 export default function Useful() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -72,105 +69,32 @@ export default function Useful() {
           <p className="text-gray-500 mt-4 text-lg max-w-xl">Делюсь опытом и решениями, которые сам прошёл в работе</p>
         </div>
 
-        <YandexBlock />
+        <div className="flex flex-col gap-3 mb-12">
+          {SECTIONS.map((s) => (
+            <Link
+              key={s.to}
+              to={s.to}
+              className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+              style={{ borderColor: s.border, background: `${s.border}10` }}
+            >
+              <div className="flex items-center gap-4">
+                <span className="text-2xl">{s.icon}</span>
+                <div>
+                  <p className="font-bold text-black text-base">{s.label}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{s.description}</p>
+                </div>
+              </div>
+              <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
+            </Link>
+          ))}
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mt-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {articles.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
         </div>
       </main>
-    </div>
-  );
-}
-
-function YandexBlock() {
-  const [open, setOpen] = useState(false);
-  const [rsyOpen, setRsyOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = (sites: string[]) => {
-    navigator.clipboard.writeText(sites.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="mb-8 border-2 border-[#FEEB19] rounded-2xl overflow-hidden">
-      <button
-        onClick={() => { setOpen(!open); setRsyOpen(false); setActiveSection(null); }}
-        className="w-full flex items-center justify-between px-6 py-4 bg-[#FEEB19]/10 hover:bg-[#FEEB19]/20 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xl">🟡</span>
-          <span className="font-bold text-black text-lg">Яндекс</span>
-        </div>
-        <Icon name={open ? "ChevronUp" : "ChevronDown"} size={20} />
-      </button>
-
-      {open && (
-        <div className="px-6 py-4 flex flex-col gap-3">
-          <button
-            onClick={() => { setRsyOpen(!rsyOpen); setActiveSection(null); }}
-            className="w-full flex items-center justify-between px-5 py-3 rounded-xl border border-gray-200 hover:border-[#FEEB19] hover:bg-[#FEEB19]/5 transition-all text-left"
-          >
-            <div className="flex items-center gap-3">
-              <Icon name="LayoutGrid" size={18} className="text-gray-500" />
-              <span className="font-semibold text-black">РСЯ площадки</span>
-            </div>
-            <Icon name={rsyOpen ? "ChevronUp" : "ChevronDown"} size={16} className="text-gray-400" />
-          </button>
-
-          {rsyOpen && (
-            <div className="ml-4 flex flex-col gap-2">
-              {RSY_SECTIONS.map((section) => (
-                <div key={section.id}>
-                  <button
-                    onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
-                    className="w-full flex items-center justify-between px-5 py-3 rounded-xl border border-gray-200 hover:border-[#FEEB19] hover:bg-[#FEEB19]/5 transition-all text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon name="List" size={16} className="text-gray-500" />
-                      <span className="font-medium text-black">{section.label}</span>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{section.sites.length}</span>
-                    </div>
-                    <Icon name={activeSection === section.id ? "ChevronUp" : "ChevronDown"} size={16} className="text-gray-400" />
-                  </button>
-
-                  {activeSection === section.id && (
-                    <div className="mt-2 rounded-xl border border-gray-200 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-                        <span className="text-sm font-semibold text-gray-600">{section.label}</span>
-                        <button
-                          onClick={() => handleCopy(section.sites)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                          style={{ background: copied ? "#22c55e" : "#FEEB19", color: "#000" }}
-                        >
-                          <Icon name={copied ? "Check" : "Copy"} size={13} />
-                          {copied ? "Скопировано!" : "Копировать всё"}
-                        </button>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {section.sites.map((site, i) => (
-                          <button
-                            key={i}
-                            onClick={() => { navigator.clipboard.writeText(site); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#FEEB19]/10 transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
-                          >
-                            <span className="font-mono">{site}</span>
-                            <Icon name="Copy" size={13} className="text-gray-300 group-hover:text-gray-500 transition-colors shrink-0 ml-2" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
