@@ -10,9 +10,9 @@ DAILY_LIMIT = 5
 GEN_API_URL = "https://proxy.gen-api.ru/v1/chat/completions"
 
 TONE_DESCRIPTIONS = {
-    "neutral": "нейтральный деловой тон — чётко, по делу, без лишних эмоций",
-    "friendly": "дружелюбный и живой тон — как будто советует хороший знакомый, тепло и искренне",
-    "aggressive": "агрессивный оффер — давит на срочность, выгоду и страх упустить, энергично и напористо",
+    "official": "официальный деловой тон — строго, сдержанно, без эмоций, факты и суть",
+    "selling": "продающий тон — акцент на выгоде и оффере, конкретные преимущества, чёткий призыв к действию",
+    "aggressive": "агрессивный тон — максимальное давление на срочность и страх упустить, напористо и энергично",
 }
 
 
@@ -49,9 +49,9 @@ def handler(event: dict, context) -> dict:
 
     body = json.loads(event.get("body") or "{}")
     description = (body.get("description") or "").strip()
-    tone = (body.get("tone") or "neutral").strip()
+    tone = (body.get("tone") or "official").strip()
     if tone not in TONE_DESCRIPTIONS:
-        tone = "neutral"
+        tone = "official"
     tone_desc = TONE_DESCRIPTIONS[tone]
 
     if not description:

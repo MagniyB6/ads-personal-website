@@ -5,12 +5,12 @@ import Icon from "@/components/ui/icon";
 const DAILY_LIMIT = 5;
 const STORAGE_KEY = "vk_ad_generator_usage";
 
-type Tone = "neutral" | "friendly" | "aggressive";
+type Tone = "official" | "selling" | "aggressive";
 
 const TONES: { value: Tone; label: string; desc: string; emoji: string }[] = [
-  { value: "neutral", label: "Нейтральный", desc: "Чётко и по делу", emoji: "🎯" },
-  { value: "friendly", label: "Дружелюбный", desc: "Тепло и искренне", emoji: "😊" },
-  { value: "aggressive", label: "Агрессивный", desc: "Срочность и напор", emoji: "🔥" },
+  { value: "official", label: "Официальный", desc: "Строго, деловито, без лишнего", emoji: "🎯" },
+  { value: "selling", label: "Продающий", desc: "Выгода, оффер, призыв к действию", emoji: "💰" },
+  { value: "aggressive", label: "Агрессивный", desc: "Срочность, давление, напор", emoji: "🔥" },
 ];
 
 type VkAdResult = {
@@ -71,7 +71,7 @@ export default function VkAdGenerator() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const [description, setDescription] = useState("");
-  const [tone, setTone] = useState<Tone>("neutral");
+  const [tone, setTone] = useState<Tone>("official");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VkAdResult | null>(null);
   const [error, setError] = useState<string | null>(null);
