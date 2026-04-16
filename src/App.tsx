@@ -11,6 +11,8 @@ import Useful from "./pages/Useful";
 import UsefulYandex from "./pages/UsefulYandex";
 import UsefulArticle from "./pages/UsefulArticle";
 import AdGenerator from "./pages/AdGenerator";
+import UsefulVk from "./pages/UsefulVk";
+import VkAdGenerator from "./pages/VkAdGenerator";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/useful/yandex" element={<UsefulYandex />} />
           <Route path="/useful/article/:slug" element={<UsefulArticle />} />
           <Route path="/useful/ad-generator" element={<AdGenerator />} />
+          <Route path="/useful/vk" element={<UsefulVk />} />
+          <Route path="/useful/vk-ad-generator" element={<VkAdGenerator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>

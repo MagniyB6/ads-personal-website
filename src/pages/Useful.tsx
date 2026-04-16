@@ -1,16 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import { articles, Article } from "@/data/articles";
 
 export default function Useful() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
-  const [vkToast, setVkToast] = useState(false);
-
-  const handleVkClick = () => {
-    setVkToast(true);
-    setTimeout(() => setVkToast(false), 2500);
-  };
 
   return (
     <div className="font-golos min-h-screen bg-white">
@@ -48,20 +42,20 @@ export default function Useful() {
             <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
           </Link>
 
-          <button
-            onClick={handleVkClick}
-            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity text-left w-full"
+          <Link
+            to="/useful/vk"
+            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
             style={{ borderColor: "#2688EB", background: "#2688EB10" }}
           >
             <div className="flex items-center gap-4">
               <span className="text-2xl">🔵</span>
               <div>
                 <p className="font-bold text-black text-base">VK реклама</p>
-                <p className="text-sm text-gray-500 mt-0.5">Полезные материалы по таргетированной рекламе</p>
+                <p className="text-sm text-gray-500 mt-0.5">Инструменты для таргетированной рекламы ВКонтакте</p>
               </div>
             </div>
             <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
-          </button>
+          </Link>
         </div>
 
         <div className="mb-4 flex items-center justify-between">
@@ -71,13 +65,6 @@ export default function Useful() {
 
         <ArticleCarousel articles={articles} />
       </main>
-
-      {vkToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-white"
-          style={{ background: "#2688EB" }}>
-          Скоро тут будут материалы
-        </div>
-      )}
     </div>
   );
 }

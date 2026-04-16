@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Generate VK ad",
+      "method": "POST",
+      "path": "/",
+      "body": {"description": "Фитнес-клуб в Москве. Акция — первый месяц за 990 рублей. Бассейн, тренажёрный зал, групповые занятия."},
+      "expectedStatus": 200,
+      "expectedBody": {"title": "string", "short_desc": "string", "button_text": "string", "long_desc": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Empty description",
+      "method": "POST",
+      "path": "/",
+      "body": {"description": ""},
+      "expectedStatus": 400
+    }
+  ]
+}
