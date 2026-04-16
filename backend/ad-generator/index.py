@@ -7,7 +7,7 @@ import urllib.request
 _usage: dict = {}
 DAILY_LIMIT = 5
 
-GEN_API_URL = "https://proxy.gen-api.ru/v1/chat/completions"
+GEN_API_URL = "https://proxy.gen-api.ru/v1/chat/completions"  # gen-api.ru proxy
 
 
 def get_ip_key(ip: str) -> str:
