@@ -205,7 +205,7 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
               {l.label}
             </a>
           ))}
-          <Link to={navExtra.to} className="nav-link font-semibold" style={{ color: "#7c3aed" }}>
+          <Link to={navExtra.to} className="nav-link">
             {navExtra.label}
           </Link>
         </nav>
@@ -228,8 +228,7 @@ export function Navbar({ onOpenChat }: { onOpenChat: () => void }) {
           ))}
           <Link
             to={navExtra.to}
-            className="text-base font-semibold"
-            style={{ color: "#7c3aed" }}
+            className="text-base font-medium"
             onClick={() => setMenuOpen(false)}
           >
             {navExtra.label}
