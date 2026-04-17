@@ -14,6 +14,8 @@ import AdGenerator from "./pages/AdGenerator";
 import UsefulVk from "./pages/UsefulVk";
 import VkAdGenerator from "./pages/VkAdGenerator";
 import UsefulYandexQA from "./pages/UsefulYandexQA";
+import ReportBuilder from "./pages/ReportBuilder";
+import ReportView from "./pages/ReportView";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/useful/vk" element={<UsefulVk />} />
           <Route path="/useful/vk-ad-generator" element={<VkAdGenerator />} />
           <Route path="/useful/yandex/qa" element={<UsefulYandexQA />} />
+          <Route path="/useful/report-builder" element={<ReportBuilder />} />
+          <Route path="/report/:id" element={<ReportView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound404 />} />
         </Routes>

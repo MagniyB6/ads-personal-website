@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Create report",
+      "method": "POST",
+      "path": "/",
+      "body": {"title": "Яндекс Директ", "project_name": "Тестовый проект"},
+      "expectedStatus": 201,
+      "expectedBody": {"id": "string", "edit_token": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

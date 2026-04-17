@@ -57,6 +57,21 @@ export default function Useful() {
             </div>
             <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
           </Link>
+
+          <Link
+            to="/useful/report-builder"
+            className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            style={{ borderColor: "#10b981", background: "#10b98110" }}
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-2xl">📊</span>
+              <div>
+                <p className="font-bold text-black text-base">Отчёт для клиента</p>
+                <p className="text-sm text-gray-500 mt-0.5">Красивый отчёт со ссылкой и скачиванием в PDF</p>
+              </div>
+            </div>
+            <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
+          </Link>
         </div>
 
         <div className="mb-4 flex items-center justify-between">
