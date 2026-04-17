@@ -26,7 +26,10 @@ export default function UsefulArticle() {
 
       <main className="container-narrow py-12 md:py-16 max-w-2xl">
         <div className="mb-6 flex items-center gap-3">
-          <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>
+          <span
+            className="text-xs font-bold px-3 py-1 rounded-full"
+            style={article.tag === "VK реклама" ? { background: "#2688EB", color: "#fff" } : { background: "#FEEB19", color: "#000" }}
+          >
             {article.tag}
           </span>
           <span className="text-sm text-gray-400">{article.date}</span>

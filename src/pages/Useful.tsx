@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import { articles, Article } from "@/data/articles";
@@ -109,6 +109,11 @@ function ArticleCarousel({ articles }: { articles: Article[] }) {
   );
 }
 
+function getTagStyle(tag: string): React.CSSProperties {
+  if (tag === "VK реклама") return { background: "#2688EB", color: "#fff" };
+  return { background: "#FEEB19", color: "#000" };
+}
+
 function ArticleCard({ article }: { article: Article }) {
   const firstText = article.content.find((b) => b.type === "text");
 
@@ -119,7 +124,7 @@ function ArticleCard({ article }: { article: Article }) {
     >
       <div className="relative h-44 overflow-hidden bg-gray-50">
         <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
-        <span className="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full" style={{ background: "#FEEB19", color: "#000" }}>
+        <span className="absolute top-3 left-3 text-xs font-bold px-3 py-1 rounded-full" style={getTagStyle(article.tag)}>
           {article.tag}
         </span>
       </div>
