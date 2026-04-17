@@ -36,7 +36,10 @@ def handler(event: dict, context) -> dict:
 
     try:
         if method == "GET" and report_id:
-            cur.execute(f"SELECT id, edit_token, title, project_name, date_from, date_to, cover_image_url, created_at, expires_at FROM {SCHEMA}.reports WHERE id = %s", (report_id,))
+            cur.execute(
+                f"SELECT id, edit_token, title, project_name, date_from, date_to, cover_image_url, created_at, expires_at, theme FROM {SCHEMA}.reports WHERE id = %s",
+                (report_id,)
+            )
             row = cur.fetchone()
             if not row:
                 return resp(404, {"error": "Отчёт не найден или удалён"})
@@ -46,10 +49,22 @@ def handler(event: dict, context) -> dict:
                 "date_from": str(row[4]) if row[4] else None,
                 "date_to": str(row[5]) if row[5] else None,
                 "cover_image_url": row[6],
-                "created_at": str(row[7]), "expires_at": str(row[8])
+                "created_at": str(row[7]), "expires_at": str(row[8]),
+                "theme": row[9] or "dark",
             }
-            cur.execute(f"SELECT id, position, block_type, heading, body_text, image_url FROM {SCHEMA}.report_blocks WHERE report_id = %s ORDER BY position", (report_id,))
-            blocks = [{"id": str(r[0]), "position": r[1], "block_type": r[2], "heading": r[3], "body_text": r[4], "image_url": r[5]} for r in cur.fetchall()]
+            cur.execute(
+                f"SELECT id, position, block_type, heading, body_text, image_url, image_position, image_crop FROM {SCHEMA}.report_blocks WHERE report_id = %s ORDER BY position",
+                (report_id,)
+            )
+            blocks = [
+                {
+                    "id": str(r[0]), "position": r[1], "block_type": r[2],
+                    "heading": r[3], "body_text": r[4], "image_url": r[5],
+                    "image_position": r[6] or "right",
+                    "image_crop": r[7],
+                }
+                for r in cur.fetchall()
+            ]
             report["blocks"] = blocks
             can_edit = str(report["edit_token"]) == str(edit_token) if edit_token else False
             if not can_edit:
@@ -63,9 +78,10 @@ def handler(event: dict, context) -> dict:
             project_name = body.get("project_name", "")
             date_from = body.get("date_from") or None
             date_to = body.get("date_to") or None
+            theme = body.get("theme", "dark")
             cur.execute(
-                f"INSERT INTO {SCHEMA}.reports (title, project_name, date_from, date_to) VALUES (%s, %s, %s, %s) RETURNING id, edit_token, expires_at",
-                (title, project_name, date_from, date_to)
+                f"INSERT INTO {SCHEMA}.reports (title, project_name, date_from, date_to, theme) VALUES (%s, %s, %s, %s, %s) RETURNING id, edit_token, expires_at",
+                (title, project_name, date_from, date_to, theme)
             )
             row = cur.fetchone()
             conn.commit()
@@ -84,8 +100,8 @@ def handler(event: dict, context) -> dict:
 
             if action == "update_report":
                 cur.execute(
-                    f"UPDATE {SCHEMA}.reports SET title=%s, project_name=%s, date_from=%s, date_to=%s, cover_image_url=%s WHERE id=%s",
-                    (body.get("title"), body.get("project_name"), body.get("date_from") or None, body.get("date_to") or None, body.get("cover_image_url"), report_id)
+                    f"UPDATE {SCHEMA}.reports SET title=%s, project_name=%s, date_from=%s, date_to=%s, cover_image_url=%s, theme=%s WHERE id=%s",
+                    (body.get("title"), body.get("project_name"), body.get("date_from") or None, body.get("date_to") or None, body.get("cover_image_url"), body.get("theme", "dark"), report_id)
                 )
                 conn.commit()
                 return resp(200, {"ok": True})
@@ -94,9 +110,11 @@ def handler(event: dict, context) -> dict:
                 blocks = body.get("blocks", [])
                 cur.execute(f"DELETE FROM {SCHEMA}.report_blocks WHERE report_id = %s", (report_id,))
                 for i, b in enumerate(blocks):
+                    image_crop = b.get("image_crop")
+                    image_crop_json = json.dumps(image_crop) if image_crop else None
                     cur.execute(
-                        f"INSERT INTO {SCHEMA}.report_blocks (report_id, position, block_type, heading, body_text, image_url) VALUES (%s, %s, %s, %s, %s, %s)",
-                        (report_id, i, b.get("block_type", "content"), b.get("heading", ""), b.get("body_text", ""), b.get("image_url"))
+                        f"INSERT INTO {SCHEMA}.report_blocks (report_id, position, block_type, heading, body_text, image_url, image_position, image_crop) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                        (report_id, i, b.get("block_type", "content"), b.get("heading", ""), b.get("body_text", ""), b.get("image_url"), b.get("image_position", "right"), image_crop_json)
                     )
                 conn.commit()
                 return resp(200, {"ok": True})
