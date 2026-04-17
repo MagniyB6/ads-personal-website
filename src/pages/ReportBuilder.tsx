@@ -1,14 +1,19 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Icon from "@/components/ui/icon";
+import {
+  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from "recharts";
 
 const REPORTS_URL = "https://functions.poehali.dev/f2a35ab0-9bed-49b0-9d37-c7166a3af5d8";
 const UPLOAD_URL = "https://functions.poehali.dev/8bcfffb0-13a1-4623-b29b-d28de29b3d36";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const REPORT_TITLES = [
-  { value: "Яндекс Директ", label: "Яндекс Директ", accent: "#FEEB19", emoji: "🟡" },
-  { value: "VK Реклама", label: "VK Реклама", accent: "#0077FF", emoji: "🔵" },
-  { value: "Авито Реклама", label: "Авито Реклама", accent: "#00AAFF", emoji: "🟢" },
+  { value: "Яндекс Директ", emoji: "🟡" },
+  { value: "VK Реклама", emoji: "🔵" },
+  { value: "Авито Реклама", emoji: "🟢" },
 ];
 
 const BLOCK_HEADING_TEMPLATES = [
@@ -23,163 +28,138 @@ const BLOCK_HEADING_TEMPLATES = [
 ];
 
 const IMAGE_POSITIONS = [
-  { value: "right", label: "Справа", icon: "PanelRight" },
-  { value: "left", label: "Слева", icon: "PanelLeft" },
-  { value: "bg", label: "Фон", icon: "Image" },
-  { value: "full", label: "На весь слайд", icon: "Maximize2" },
-] as const;
+  { value: "left" as const, label: "Слева", icon: "PanelLeft" as const },
+  { value: "right" as const, label: "Справа", icon: "PanelRight" as const },
+  { value: "bg" as const, label: "Фоном", icon: "Image" as const },
+  { value: "full" as const, label: "Весь слайд", icon: "Maximize2" as const },
+];
+
+const CHART_TYPES = [
+  { value: "bar" as const, label: "Столбчатый", icon: "BarChart2" as const },
+  { value: "pie" as const, label: "Круговой", icon: "PieChart" as const },
+  { value: "line" as const, label: "Линейный", icon: "TrendingUp" as const },
+];
+
+const CHART_COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899"];
 
 type ImagePosition = "right" | "left" | "bg" | "full";
 type Theme = "dark" | "light";
-
 type CropArea = { x: number; y: number; w: number; h: number };
+type ChartEntry = { label: string; value: number };
+type ChartData = { type: "bar" | "pie" | "line"; entries: ChartEntry[] };
 
 type Block = {
   id: string;
-  block_type: string;
+  block_type: "content" | "chart";
   heading: string;
   body_text: string;
   image_url?: string;
   image_position: ImagePosition;
   image_crop?: CropArea;
+  chart_data?: ChartData;
   _imageFile?: File;
   _imagePreview?: string;
-  _showCrop?: boolean;
 };
 
-function uid() {
-  return Math.random().toString(36).slice(2, 10);
-}
+function uid() { return Math.random().toString(36).slice(2, 10); }
 
 function fileToBase64(file: File): Promise<{ data: string; type: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve({ data: result.split(",")[1], type: file.type });
-    };
+    reader.onload = () => resolve({ data: (reader.result as string).split(",")[1], type: file.type });
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
 
-// --- Кадрировщик ---
-function ImageCropper({
-  src,
-  crop,
-  onChange,
-  onClose,
-}: {
-  src: string;
-  crop?: CropArea;
-  onChange: (c: CropArea) => void;
-  onClose: () => void;
+// ─── Кадрировщик ────────────────────────────────────────────────────────────
+function ImageCropper({ src, crop, onChange, onClose }: {
+  src: string; crop?: CropArea;
+  onChange: (c: CropArea) => void; onClose: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<CropArea>(crop || { x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
-  const dragging = useRef<null | "move" | "tl" | "tr" | "bl" | "br">(null);
-  const startPos = useRef({ mx: 0, my: 0, bx: 0, by: 0, bw: 0, bh: 0 });
+  const [box, setBox] = useState<CropArea>(crop ?? { x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
+  const drag = useRef<null | "move" | "tl" | "tr" | "bl" | "br">(null);
+  const start = useRef({ mx: 0, my: 0, bx: 0, by: 0, bw: 0, bh: 0 });
 
-  const getRelPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const rect = containerRef.current!.getBoundingClientRect();
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-    return { rx: (clientX - rect.left) / rect.width, ry: (clientY - rect.top) / rect.height };
+  const relPos = (e: React.MouseEvent) => {
+    const r = containerRef.current!.getBoundingClientRect();
+    return { rx: (e.clientX - r.left) / r.width, ry: (e.clientY - r.top) / r.height };
   };
 
-  const onMouseDown = (e: React.MouseEvent, type: typeof dragging.current) => {
-    e.stopPropagation();
-    dragging.current = type;
-    const { rx, ry } = getRelPos(e);
-    startPos.current = { mx: rx, my: ry, bx: box.x, by: box.y, bw: box.w, bh: box.h };
+  const onDown = (e: React.MouseEvent, type: typeof drag.current) => {
+    e.stopPropagation(); e.preventDefault();
+    drag.current = type;
+    const { rx, ry } = relPos(e);
+    start.current = { mx: rx, my: ry, bx: box.x, by: box.y, bw: box.w, bh: box.h };
   };
 
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragging.current) return;
-    const { rx, ry } = getRelPos(e);
-    const dx = rx - startPos.current.mx;
-    const dy = ry - startPos.current.my;
-    const { bx, by, bw, bh } = startPos.current;
-    const minSize = 0.05;
+  const onMove = (e: React.MouseEvent) => {
+    if (!drag.current) return;
+    const { rx, ry } = relPos(e);
+    const dx = rx - start.current.mx, dy = ry - start.current.my;
+    const { bx, by, bw, bh } = start.current;
+    const MIN = 0.05;
     let nb = { ...box };
-    if (dragging.current === "move") {
+    if (drag.current === "move") {
       nb = { x: Math.max(0, Math.min(1 - bw, bx + dx)), y: Math.max(0, Math.min(1 - bh, by + dy)), w: bw, h: bh };
-    } else if (dragging.current === "tl") {
-      const nx = Math.max(0, Math.min(bx + bw - minSize, bx + dx));
-      const ny = Math.max(0, Math.min(by + bh - minSize, by + dy));
+    } else if (drag.current === "tl") {
+      const nx = Math.max(0, Math.min(bx + bw - MIN, bx + dx));
+      const ny = Math.max(0, Math.min(by + bh - MIN, by + dy));
       nb = { x: nx, y: ny, w: bx + bw - nx, h: by + bh - ny };
-    } else if (dragging.current === "tr") {
-      const ny = Math.max(0, Math.min(by + bh - minSize, by + dy));
-      nb = { x: bx, y: ny, w: Math.max(minSize, Math.min(1 - bx, bw + dx)), h: by + bh - ny };
-    } else if (dragging.current === "bl") {
-      const nx = Math.max(0, Math.min(bx + bw - minSize, bx + dx));
-      nb = { x: nx, y: by, w: bx + bw - nx, h: Math.max(minSize, Math.min(1 - by, bh + dy)) };
-    } else if (dragging.current === "br") {
-      nb = { x: bx, y: by, w: Math.max(minSize, Math.min(1 - bx, bw + dx)), h: Math.max(minSize, Math.min(1 - by, bh + dy)) };
+    } else if (drag.current === "tr") {
+      const ny = Math.max(0, Math.min(by + bh - MIN, by + dy));
+      nb = { x: bx, y: ny, w: Math.max(MIN, Math.min(1 - bx, bw + dx)), h: by + bh - ny };
+    } else if (drag.current === "bl") {
+      const nx = Math.max(0, Math.min(bx + bw - MIN, bx + dx));
+      nb = { x: nx, y: by, w: bx + bw - nx, h: Math.max(MIN, Math.min(1 - by, bh + dy)) };
+    } else if (drag.current === "br") {
+      nb = { x: bx, y: by, w: Math.max(MIN, Math.min(1 - bx, bw + dx)), h: Math.max(MIN, Math.min(1 - by, bh + dy)) };
     }
     setBox(nb);
   };
 
-  const handleSize = 12;
+  const H = 10;
+  const corners = [
+    { id: "tl" as const, style: { top: -H / 2, left: -H / 2, cursor: "nwse-resize" } },
+    { id: "tr" as const, style: { top: -H / 2, right: -H / 2, cursor: "nesw-resize" } },
+    { id: "bl" as const, style: { bottom: -H / 2, left: -H / 2, cursor: "nesw-resize" } },
+    { id: "br" as const, style: { bottom: -H / 2, right: -H / 2, cursor: "nwse-resize" } },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl overflow-hidden max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <p className="font-bold text-sm text-black">Кадрировать изображение</p>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-            <Icon name="X" size={16} />
-          </button>
+      <div className="bg-white rounded-2xl overflow-hidden max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3 border-b">
+          <p className="font-bold text-sm">Кадрировать изображение</p>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><Icon name="X" size={16} /></button>
         </div>
         <div className="p-4">
-          <div
-            ref={containerRef}
-            className="relative select-none overflow-hidden rounded-xl bg-gray-100"
-            style={{ cursor: dragging.current ? "grabbing" : "default" }}
-            onMouseMove={onMouseMove}
-            onMouseUp={() => { dragging.current = null; }}
-            onMouseLeave={() => { dragging.current = null; }}
-          >
-            <img src={src} alt="" className="w-full block" draggable={false} />
-            {/* Затемнение снаружи */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: `linear-gradient(to right, rgba(0,0,0,0.5) ${box.x * 100}%, transparent ${box.x * 100}%)`,
-            }} />
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: `linear-gradient(to left, rgba(0,0,0,0.5) ${(1 - box.x - box.w) * 100}%, transparent ${(1 - box.x - box.w) * 100}%)`,
-            }} />
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: `linear-gradient(to bottom, rgba(0,0,0,0.5) ${box.y * 100}%, transparent ${box.y * 100}%)`,
-            }} />
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: `linear-gradient(to top, rgba(0,0,0,0.5) ${(1 - box.y - box.h) * 100}%, transparent ${(1 - box.y - box.h) * 100}%)`,
-            }} />
-            {/* Рамка */}
-            <div
-              className="absolute border-2 border-white cursor-grab"
-              style={{ left: `${box.x * 100}%`, top: `${box.y * 100}%`, width: `${box.w * 100}%`, height: `${box.h * 100}%` }}
-              onMouseDown={(e) => onMouseDown(e, "move")}
-            >
-              {/* Угловые ручки */}
-              {(["tl", "tr", "bl", "br"] as const).map((corner) => (
-                <div
-                  key={corner}
-                  className="absolute bg-white rounded-sm border border-gray-400"
-                  style={{
-                    width: handleSize, height: handleSize,
-                    top: corner.startsWith("t") ? -handleSize / 2 : undefined,
-                    bottom: corner.startsWith("b") ? -handleSize / 2 : undefined,
-                    left: corner.endsWith("l") ? -handleSize / 2 : undefined,
-                    right: corner.endsWith("r") ? -handleSize / 2 : undefined,
-                    cursor: corner === "tl" || corner === "br" ? "nwse-resize" : "nesw-resize",
-                  }}
-                  onMouseDown={(e) => onMouseDown(e, corner)}
-                />
+          <div ref={containerRef} className="relative select-none overflow-hidden rounded-xl bg-gray-100"
+            onMouseMove={onMove} onMouseUp={() => { drag.current = null; }} onMouseLeave={() => { drag.current = null; }}>
+            <img src={src} alt="" className="w-full block pointer-events-none" draggable={false} />
+            {/* затемнение снаружи рамки */}
+            {[
+              { style: { top: 0, left: 0, width: `${box.x * 100}%`, height: "100%" } },
+              { style: { top: 0, right: 0, width: `${(1 - box.x - box.w) * 100}%`, height: "100%" } },
+              { style: { top: 0, left: `${box.x * 100}%`, width: `${box.w * 100}%`, height: `${box.y * 100}%` } },
+              { style: { bottom: 0, left: `${box.x * 100}%`, width: `${box.w * 100}%`, height: `${(1 - box.y - box.h) * 100}%` } },
+            ].map((s, i) => (
+              <div key={i} className="absolute pointer-events-none" style={{ ...s.style as React.CSSProperties, background: "rgba(0,0,0,0.45)" }} />
+            ))}
+            {/* рамка */}
+            <div className="absolute border-2 border-white"
+              style={{ left: `${box.x * 100}%`, top: `${box.y * 100}%`, width: `${box.w * 100}%`, height: `${box.h * 100}%`, cursor: "grab" }}
+              onMouseDown={e => onDown(e, "move")}>
+              {corners.map(c => (
+                <div key={c.id} className="absolute bg-white border border-gray-400 rounded-sm"
+                  style={{ width: H, height: H, position: "absolute", ...c.style }}
+                  onMouseDown={e => onDown(e, c.id)} />
               ))}
             </div>
           </div>
-          <div className="flex gap-3 mt-4">
-            <button onClick={() => setBox({ x: 0, y: 0, w: 1, h: 1 })} className="text-xs text-gray-500 hover:text-black transition-colors">
+          <div className="flex items-center gap-3 mt-4">
+            <button onClick={() => setBox({ x: 0, y: 0, w: 1, h: 1 })} className="text-xs text-gray-400 hover:text-black transition-colors">
               Сбросить
             </button>
             <div className="flex-1" />
@@ -188,8 +168,8 @@ function ImageCropper({
             </button>
             <button
               onClick={() => { onChange(box); onClose(); }}
-              className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-              style={{ background: "#FEEB19", color: "#000" }}
+              className="px-5 py-2 rounded-xl text-sm font-bold"
+              style={{ background: "#6366f1", color: "#fff" }}
             >
               Применить
             </button>
@@ -200,164 +180,199 @@ function ImageCropper({
   );
 }
 
-// --- Загрузчик с позицией и кадрированием ---
-function BlockImageUploader({
-  value,
-  preview,
-  position,
-  crop,
-  onFileChange,
-  onPositionChange,
-  onCropChange,
-}: {
-  value?: string;
-  preview?: string;
-  position: ImagePosition;
-  crop?: CropArea;
+// ─── Загрузчик изображения ───────────────────────────────────────────────────
+function BlockImageUploader({ value, preview, position, crop, onFileChange, onPositionChange, onCropChange }: {
+  value?: string; preview?: string; position: ImagePosition; crop?: CropArea;
   onFileChange: (file: File | null, preview: string) => void;
   onPositionChange: (pos: ImagePosition) => void;
   onCropChange: (c: CropArea) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showCrop, setShowCrop] = useState(false);
+  const [sizeError, setSizeError] = useState("");
   const displaySrc = preview || value;
 
-  const cropStyle = displaySrc && crop
-    ? {
-        objectFit: "none" as const,
-        objectPosition: `-${crop.x * 100}% -${crop.y * 100}%`,
-        transform: `scale(${1 / crop.w})`,
-        transformOrigin: "top left",
-        width: `${crop.w * 100}%`,
-        height: `${crop.h * 100}%`,
-      }
-    : { objectFit: "cover" as const, width: "100%", height: "100%" };
+  const handleFile = (file: File) => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      setSizeError(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} MB). Максимум 5 MB.`);
+      return;
+    }
+    setSizeError("");
+    onFileChange(file, URL.createObjectURL(file));
+  };
 
   return (
     <div>
       <p className="text-xs font-semibold text-gray-600 mb-2">Изображение / скриншот</p>
-
-      {/* Позиция */}
       <div className="flex gap-1.5 mb-3 flex-wrap">
-        {IMAGE_POSITIONS.map((pos) => (
-          <button
-            key={pos.value}
-            onClick={() => onPositionChange(pos.value)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-              position === pos.value
-                ? "border-black bg-black text-white"
-                : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"
-            }`}
-          >
-            <Icon name={pos.icon} size={12} />
-            {pos.label}
+        {IMAGE_POSITIONS.map(pos => (
+          <button key={pos.value} onClick={() => onPositionChange(pos.value)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${position === pos.value ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"}`}>
+            <Icon name={pos.icon} size={12} />{pos.label}
           </button>
         ))}
       </div>
 
-      {/* Превью и кнопки */}
+      {sizeError && <p className="text-xs text-red-500 mb-2">{sizeError}</p>}
+
       {displaySrc ? (
         <div className="relative rounded-xl overflow-hidden bg-gray-100 h-36">
-          <img
-            src={displaySrc}
-            alt=""
-            style={cropStyle}
-          />
+          <img src={displaySrc} alt="" className="w-full h-full object-cover" />
           <div className="absolute bottom-2 right-2 flex gap-1.5">
-            <button
-              onClick={() => setShowCrop(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/90 text-xs font-semibold text-gray-700 shadow hover:bg-white transition-colors"
-            >
-              <Icon name="Crop" size={12} />
-              Кадрировать
+            <button onClick={() => setShowCrop(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/90 text-xs font-semibold text-gray-700 shadow hover:bg-white transition-colors">
+              <Icon name="Crop" size={12} />Кадрировать
             </button>
-            <button
-              onClick={() => onFileChange(null, "")}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/90 text-xs font-semibold text-white shadow hover:bg-red-500 transition-colors"
-            >
+            <button onClick={() => { onFileChange(null, ""); setSizeError(""); }}
+              className="px-2.5 py-1.5 rounded-lg bg-red-500/90 text-white shadow hover:bg-red-500 transition-colors">
               <Icon name="Trash2" size={12} />
             </button>
           </div>
+          {crop && (
+            <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
+              кадрировано
+            </div>
+          )}
         </div>
       ) : (
-        <div
-          onClick={() => inputRef.current?.click()}
-          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 h-20 flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600 transition-all"
-        >
+        <div onClick={() => inputRef.current?.click()}
+          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 h-20 flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600 transition-all">
           <Icon name="ImagePlus" size={18} />
-          <span className="text-xs">Загрузить изображение</span>
+          <span className="text-xs">Загрузить (до 5 MB)</span>
         </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          onFileChange(file, URL.createObjectURL(file));
-        }}
-      />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
 
       {showCrop && displaySrc && (
-        <ImageCropper
-          src={displaySrc}
-          crop={crop}
-          onChange={onCropChange}
-          onClose={() => setShowCrop(false)}
-        />
+        <ImageCropper src={displaySrc} crop={crop} onChange={onCropChange} onClose={() => setShowCrop(false)} />
       )}
     </div>
   );
 }
 
-// --- Загрузчик обложки ---
-function CoverImageUploader({
-  preview,
-  onChange,
-}: {
-  preview: string;
-  onChange: (file: File | null, preview: string) => void;
-}) {
+// ─── Редактор графика ─────────────────────────────────────────────────────────
+function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartData) => void }) {
+  const addEntry = () => onChange({ ...data, entries: [...data.entries, { label: `Строка ${data.entries.length + 1}`, value: 0 }] });
+  const removeEntry = (i: number) => onChange({ ...data, entries: data.entries.filter((_, idx) => idx !== i) });
+  const updateEntry = (i: number, patch: Partial<ChartEntry>) =>
+    onChange({ ...data, entries: data.entries.map((e, idx) => idx === i ? { ...e, ...patch } : e) });
+
+  const preview = data.entries.map(e => ({ name: e.label, value: e.value }));
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Тип графика */}
+      <div>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Тип графика</p>
+        <div className="flex gap-2 flex-wrap">
+          {CHART_TYPES.map(t => (
+            <button key={t.value} onClick={() => onChange({ ...data, type: t.value })}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${data.type === t.value ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-500 hover:border-gray-400"}`}>
+              <Icon name={t.icon} size={12} />{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Данные */}
+      <div>
+        <p className="text-xs font-semibold text-gray-600 mb-2">Данные</p>
+        <div className="flex flex-col gap-2">
+          {data.entries.map((entry, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <div className="w-3 h-3 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+              <input value={entry.label} onChange={e => updateEntry(i, { label: e.target.value })}
+                placeholder="Название" className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+              <input type="number" value={entry.value} onChange={e => updateEntry(i, { value: Number(e.target.value) })}
+                className="w-20 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+              <button onClick={() => removeEntry(i)} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
+                <Icon name="X" size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={addEntry}
+          className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-black transition-colors">
+          <Icon name="Plus" size={12} />Добавить строку
+        </button>
+      </div>
+
+      {/* Мини-превью */}
+      {data.entries.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-3">
+          <p className="text-xs text-gray-400 mb-2">Предпросмотр</p>
+          {data.type === "pie" ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <PieChart>
+                <Pie data={preview} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60}>
+                  {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : data.type === "line" ? (
+            <ResponsiveContainer width="100%" height={120}>
+              <LineChart data={preview}>
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="value" stroke={CHART_COLORS[0]} strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={preview}>
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Загрузчик обложки ────────────────────────────────────────────────────────
+function CoverImageUploader({ preview, onChange }: { preview: string; onChange: (file: File | null, preview: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sizeError, setSizeError] = useState("");
   return (
     <div>
       <p className="text-xs font-semibold text-gray-600 mb-1">Обложка (необязательно)</p>
+      {sizeError && <p className="text-xs text-red-500 mb-1">{sizeError}</p>}
       {preview ? (
         <div className="relative rounded-xl overflow-hidden bg-gray-100 h-32">
           <img src={preview} alt="" className="w-full h-full object-cover" />
-          <button
-            onClick={() => onChange(null, "")}
-            className="absolute top-2 right-2 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/90 text-xs font-semibold text-white shadow"
-          >
+          <button onClick={() => onChange(null, "")}
+            className="absolute top-2 right-2 px-2.5 py-1.5 rounded-lg bg-red-500/90 text-white text-xs font-semibold shadow">
             <Icon name="Trash2" size={12} />
           </button>
         </div>
       ) : (
-        <div
-          onClick={() => inputRef.current?.click()}
-          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 h-20 flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600 transition-all"
-        >
+        <div onClick={() => inputRef.current?.click()}
+          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 h-20 flex items-center justify-center gap-2 text-gray-400 transition-all">
           <Icon name="ImagePlus" size={18} />
-          <span className="text-xs">Загрузить обложку</span>
+          <span className="text-xs">Загрузить обложку (до 5 MB)</span>
         </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          onChange(file, URL.createObjectURL(file));
-        }}
-      />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0]; if (!f) return;
+          if (f.size > MAX_IMAGE_BYTES) { setSizeError(`Файл слишком большой. Максимум 5 MB.`); return; }
+          setSizeError(""); onChange(f, URL.createObjectURL(f));
+          e.target.value = "";
+        }} />
     </div>
   );
 }
 
+// ─── Основной компонент ───────────────────────────────────────────────────────
 export default function ReportBuilder() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
   const navigate = useNavigate();
@@ -376,25 +391,19 @@ export default function ReportBuilder() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const addBlock = () => {
-    setBlocks((prev) => [
-      ...prev,
-      { id: uid(), block_type: "content", heading: "Основные результаты", body_text: "", image_position: "right" },
-    ]);
-  };
+  const addContentBlock = () => setBlocks(p => [...p, { id: uid(), block_type: "content", heading: "Основные результаты", body_text: "", image_position: "right" }]);
+  const addChartBlock = () => setBlocks(p => [...p, {
+    id: uid(), block_type: "chart", heading: "Ключевые показатели", body_text: "", image_position: "right",
+    chart_data: { type: "bar", entries: [{ label: "Показатель 1", value: 100 }, { label: "Показатель 2", value: 75 }] },
+  }]);
 
-  const removeBlock = (id: string) => setBlocks((prev) => prev.filter((b) => b.id !== id));
-
-  const updateBlock = (id: string, patch: Partial<Block>) =>
-    setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-
+  const removeBlock = (id: string) => setBlocks(p => p.filter(b => b.id !== id));
+  const updateBlock = (id: string, patch: Partial<Block>) => setBlocks(p => p.map(b => b.id === id ? { ...b, ...patch } : b));
   const moveBlock = (id: string, dir: -1 | 1) => {
-    setBlocks((prev) => {
-      const idx = prev.findIndex((b) => b.id === id);
-      if (idx + dir < 0 || idx + dir >= prev.length) return prev;
-      const next = [...prev];
-      [next[idx], next[idx + dir]] = [next[idx + dir], next[idx]];
-      return next;
+    setBlocks(p => {
+      const idx = p.findIndex(b => b.id === id);
+      if (idx + dir < 0 || idx + dir >= p.length) return p;
+      const n = [...p]; [n[idx], n[idx + dir]] = [n[idx + dir], n[idx]]; return n;
     });
   };
 
@@ -412,39 +421,36 @@ export default function ReportBuilder() {
 
   const handleSave = async () => {
     if (!projectName.trim()) { setError("Введи название проекта"); return; }
-    setError("");
-    setSaving(true);
-    setStep("saving");
+    setError(""); setSaving(true); setStep("saving");
     try {
-      const createRes = await fetch(REPORTS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const cr = await fetch(REPORTS_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: titleObj.value, project_name: projectName, date_from: dateFrom || null, date_to: dateTo || null, theme }),
       });
-      const created = await createRes.json();
-      if (!createRes.ok) throw new Error(created.error || "Ошибка создания");
+      const created = await cr.json();
+      if (!cr.ok) throw new Error(created.error);
       const { id, edit_token } = created;
 
       let coverImageUrl: string | undefined;
       if (coverFile) coverImageUrl = await uploadImage(coverFile, id, edit_token);
 
       await fetch(`${REPORTS_URL}?id=${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Edit-Token": edit_token },
+        method: "PUT", headers: { "Content-Type": "application/json", "X-Edit-Token": edit_token },
         body: JSON.stringify({ action: "update_report", title: titleObj.value, project_name: projectName, date_from: dateFrom || null, date_to: dateTo || null, cover_image_url: coverImageUrl, theme }),
       });
 
-      const uploadedBlocks = await Promise.all(
-        blocks.map(async (b) => {
-          let imgUrl = b.image_url;
-          if (b._imageFile) imgUrl = await uploadImage(b._imageFile, id, edit_token);
-          return { block_type: b.block_type, heading: b.heading, body_text: b.body_text, image_url: imgUrl || null, image_position: b.image_position, image_crop: b.image_crop || null };
-        })
-      );
+      const uploadedBlocks = await Promise.all(blocks.map(async b => {
+        let imgUrl = b.image_url;
+        if (b._imageFile) imgUrl = await uploadImage(b._imageFile, id, edit_token);
+        return {
+          block_type: b.block_type, heading: b.heading, body_text: b.body_text,
+          image_url: imgUrl || null, image_position: b.image_position, image_crop: b.image_crop || null,
+          chart_data: b.chart_data || null,
+        };
+      }));
 
       await fetch(`${REPORTS_URL}?id=${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Edit-Token": edit_token },
+        method: "PUT", headers: { "Content-Type": "application/json", "X-Edit-Token": edit_token },
         body: JSON.stringify({ action: "upsert_blocks", blocks: uploadedBlocks }),
       });
 
@@ -458,15 +464,12 @@ export default function ReportBuilder() {
     }
   };
 
-  const accentColor = titleObj.accent;
-
   return (
     <div className="font-golos min-h-screen bg-white">
       <header className="border-b border-gray-100 sticky top-0 bg-white/95 backdrop-blur-sm z-40">
         <div className="container-narrow flex items-center h-16 md:h-20 gap-4">
           <Link to="/useful" className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-black transition-colors">
-            <Icon name="ArrowLeft" size={18} />
-            Полезное
+            <Icon name="ArrowLeft" size={18} />Полезное
           </Link>
           <span className="text-gray-300">|</span>
           <span className="font-bold text-black text-base">Отчёт для клиента</span>
@@ -497,102 +500,51 @@ export default function ReportBuilder() {
               </div>
 
               <div className="flex flex-col gap-4">
-                {/* Площадка */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 block mb-2">Рекламная площадка</label>
                   <div className="flex flex-wrap gap-2">
-                    {REPORT_TITLES.map((t) => (
-                      <button
-                        key={t.value}
-                        onClick={() => setTitleObj(t)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
-                          titleObj.value === t.value ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
-                        }`}
-                      >
-                        <span>{t.emoji}</span>
-                        <span>{t.label}</span>
+                    {REPORT_TITLES.map(t => (
+                      <button key={t.value} onClick={() => setTitleObj(t)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${titleObj.value === t.value ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"}`}>
+                        <span>{t.emoji}</span><span>{t.value}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Тема */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 block mb-2">Тема оформления</label>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setTheme("dark")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
-                        theme === "dark" ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
-                      }`}
-                    >
-                      <Icon name="Moon" size={14} />
-                      Тёмная
-                    </button>
-                    <button
-                      onClick={() => setTheme("light")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
-                        theme === "light" ? "border-black bg-gray-900 text-white" : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
-                      }`}
-                    >
-                      <Icon name="Sun" size={14} />
-                      Светлая
-                    </button>
+                    {[{ v: "dark" as Theme, label: "Тёмная", icon: "Moon" as const }, { v: "light" as Theme, label: "Светлая", icon: "Sun" as const }].map(t => (
+                      <button key={t.v} onClick={() => setTheme(t.v)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${theme === t.v ? "border-black bg-black text-white" : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"}`}>
+                        <Icon name={t.icon} size={14} />{t.label}
+                      </button>
+                    ))}
                   </div>
-                </div>
-
-                {/* Превью титула */}
-                <div
-                  className="rounded-xl overflow-hidden"
-                  style={{
-                    background: theme === "dark"
-                      ? `linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)`
-                      : `linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%)`,
-                    border: `2px solid ${accentColor}`,
-                    padding: "20px 24px",
-                    minHeight: 90,
-                  }}
-                >
-                  <p style={{ color: accentColor, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>
-                    {titleObj.value}
-                  </p>
-                  <p style={{ color: theme === "dark" ? "#fff" : "#111", fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
-                    {projectName || "Название проекта"}
-                  </p>
-                  {(dateFrom || dateTo) && (
-                    <p style={{ color: theme === "dark" ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)", fontSize: 11, marginTop: 6 }}>
-                      {dateFrom ? dateFrom.split("-").reverse().join(".") : "–"} — {dateTo ? dateTo.split("-").reverse().join(".") : "–"}
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 block mb-1">Название проекта</label>
-                  <input
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
+                  <input value={projectName} onChange={e => setProjectName(e.target.value)}
                     placeholder="Например: ООО «Окна Плюс»"
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 block mb-1">Дата с</label>
-                    <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                    <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-600 block mb-1">Дата по</label>
-                    <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+                    <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                   </div>
                 </div>
 
-                <CoverImageUploader
-                  preview={coverPreview}
-                  onChange={(file, prev) => { setCoverFile(file); setCoverPreview(prev); }}
-                />
+                <CoverImageUploader preview={coverPreview} onChange={(f, p) => { setCoverFile(f); setCoverPreview(p); }} />
               </div>
             </section>
 
@@ -601,8 +553,13 @@ export default function ReportBuilder() {
               <section key={block.id} className="bg-gray-50 rounded-2xl p-5 mb-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold shrink-0">{idx + 2}</div>
-                    <span className="font-bold text-black text-sm">Блок</span>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ background: block.block_type === "chart" ? "#eef2ff" : "#f3f4f6", color: block.block_type === "chart" ? "#6366f1" : "#6b7280" }}>
+                      {idx + 2}
+                    </div>
+                    <span className="font-bold text-black text-sm">
+                      {block.block_type === "chart" ? "📊 График" : "Блок"}
+                    </span>
                     <span className="text-xs text-gray-400">(опционально)</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -623,15 +580,12 @@ export default function ReportBuilder() {
 
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 block mb-1">Заголовок блока</label>
-                    <input
-                      value={block.heading}
-                      onChange={(e) => updateBlock(block.id, { heading: e.target.value })}
-                      placeholder="Заголовок"
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    />
+                    <label className="text-xs font-semibold text-gray-600 block mb-1">Заголовок</label>
+                    <input value={block.heading} onChange={e => updateBlock(block.id, { heading: e.target.value })}
+                      placeholder="Заголовок блока"
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {BLOCK_HEADING_TEMPLATES.map((t) => (
+                      {BLOCK_HEADING_TEMPLATES.map(t => (
                         <button key={t} onClick={() => updateBlock(block.id, { heading: t })}
                           className="text-xs px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-black transition-all">
                           {t}
@@ -642,49 +596,49 @@ export default function ReportBuilder() {
 
                   <div>
                     <label className="text-xs font-semibold text-gray-600 block mb-1">Текст</label>
-                    <textarea
-                      value={block.body_text}
-                      onChange={(e) => updateBlock(block.id, { body_text: e.target.value })}
-                      rows={4}
-                      placeholder="Основная информация, аналитика, выводы..."
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
-                    />
+                    <textarea value={block.body_text} onChange={e => updateBlock(block.id, { body_text: e.target.value })}
+                      rows={3} placeholder="Основная информация, аналитика, выводы..."
+                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
                   </div>
 
-                  <BlockImageUploader
-                    value={block.image_url}
-                    preview={block._imagePreview}
-                    position={block.image_position}
-                    crop={block.image_crop}
-                    onFileChange={(file, prev) => updateBlock(block.id, { _imageFile: file || undefined, _imagePreview: prev, image_crop: undefined })}
-                    onPositionChange={(pos) => updateBlock(block.id, { image_position: pos })}
-                    onCropChange={(c) => updateBlock(block.id, { image_crop: c })}
-                  />
+                  {block.block_type === "chart" && block.chart_data && (
+                    <ChartEditor data={block.chart_data} onChange={d => updateBlock(block.id, { chart_data: d })} />
+                  )}
+
+                  {block.block_type === "content" && (
+                    <BlockImageUploader
+                      value={block.image_url} preview={block._imagePreview}
+                      position={block.image_position} crop={block.image_crop}
+                      onFileChange={(f, p) => updateBlock(block.id, { _imageFile: f || undefined, _imagePreview: p, image_crop: undefined })}
+                      onPositionChange={pos => updateBlock(block.id, { image_position: pos })}
+                      onCropChange={c => updateBlock(block.id, { image_crop: c })}
+                    />
+                  )}
                 </div>
               </section>
             ))}
 
-            <button
-              onClick={addBlock}
-              className="w-full rounded-2xl border-2 border-dashed border-gray-200 py-4 flex items-center justify-center gap-2 text-sm font-semibold text-gray-400 hover:border-gray-400 hover:text-black transition-all mb-8"
-            >
-              <Icon name="Plus" size={16} />
-              Добавить блок
-            </button>
+            {/* Кнопки добавления блоков */}
+            <div className="flex gap-3 mb-8">
+              <button onClick={addContentBlock}
+                className="flex-1 rounded-2xl border-2 border-dashed border-gray-200 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-gray-400 hover:border-gray-400 hover:text-black transition-all">
+                <Icon name="Plus" size={15} />Текстовый блок
+              </button>
+              <button onClick={addChartBlock}
+                className="flex-1 rounded-2xl border-2 border-dashed border-indigo-200 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-indigo-300 hover:border-indigo-400 hover:text-indigo-600 transition-all">
+                <Icon name="BarChart2" size={15} />График
+              </button>
+            </div>
 
             {error && (
               <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4 text-sm text-red-600">
-                <Icon name="AlertCircle" size={16} />
-                {error}
+                <Icon name="AlertCircle" size={16} />{error}
               </div>
             )}
 
-            <button
-              onClick={handleSave}
-              disabled={saving}
+            <button onClick={handleSave} disabled={saving}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-base disabled:opacity-50 transition-all"
-              style={{ background: "#FEEB19", color: "#000" }}
-            >
+              style={{ background: "#FEEB19", color: "#000" }}>
               {saving ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Sparkles" size={16} />}
               Создать отчёт
             </button>

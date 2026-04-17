@@ -53,7 +53,7 @@ def handler(event: dict, context) -> dict:
                 "theme": row[9] or "dark",
             }
             cur.execute(
-                f"SELECT id, position, block_type, heading, body_text, image_url, image_position, image_crop FROM {SCHEMA}.report_blocks WHERE report_id = %s ORDER BY position",
+                f"SELECT id, position, block_type, heading, body_text, image_url, image_position, image_crop, chart_data FROM {SCHEMA}.report_blocks WHERE report_id = %s ORDER BY position",
                 (report_id,)
             )
             blocks = [
@@ -62,6 +62,7 @@ def handler(event: dict, context) -> dict:
                     "heading": r[3], "body_text": r[4], "image_url": r[5],
                     "image_position": r[6] or "right",
                     "image_crop": r[7],
+                    "chart_data": r[8],
                 }
                 for r in cur.fetchall()
             ]
@@ -112,9 +113,11 @@ def handler(event: dict, context) -> dict:
                 for i, b in enumerate(blocks):
                     image_crop = b.get("image_crop")
                     image_crop_json = json.dumps(image_crop) if image_crop else None
+                    chart_data = b.get("chart_data")
+                    chart_data_json = json.dumps(chart_data) if chart_data else None
                     cur.execute(
-                        f"INSERT INTO {SCHEMA}.report_blocks (report_id, position, block_type, heading, body_text, image_url, image_position, image_crop) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                        (report_id, i, b.get("block_type", "content"), b.get("heading", ""), b.get("body_text", ""), b.get("image_url"), b.get("image_position", "right"), image_crop_json)
+                        f"INSERT INTO {SCHEMA}.report_blocks (report_id, position, block_type, heading, body_text, image_url, image_position, image_crop, chart_data) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                        (report_id, i, b.get("block_type", "content"), b.get("heading", ""), b.get("body_text", ""), b.get("image_url"), b.get("image_position", "right"), image_crop_json, chart_data_json)
                     )
                 conn.commit()
                 return resp(200, {"ok": True})
