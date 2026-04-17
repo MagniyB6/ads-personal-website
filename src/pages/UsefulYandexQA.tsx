@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import { QA_GROUPS, QAItem } from "@/data/qaData";
 
-function QACard({ item }: { item: QAItem }) {
+function QAAccordion({ item }: { item: QAItem }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -11,10 +11,10 @@ function QACard({ item }: { item: QAItem }) {
       className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => setOpen((v) => !v)}
     >
-      <div className="flex items-start justify-between gap-4 px-5 py-5">
+      <div className="flex items-center justify-between gap-4 px-5 py-5">
         <p className="font-semibold text-black text-sm leading-snug">{item.question}</p>
         <span
-          className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-transform mt-0.5"
+          className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-transform"
           style={{
             background: "#FEEB19",
             color: "#000",
@@ -39,19 +39,37 @@ function QACard({ item }: { item: QAItem }) {
   );
 }
 
-function QACarousel({ items }: { items: QAItem[] }) {
+function QAMobileCard({ item }: { item: QAItem }) {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col w-[82vw] max-w-xs shrink-0 snap-start">
+      <div className="px-5 pt-5 pb-3">
+        <div className="w-7 h-7 rounded-full flex items-center justify-center mb-3" style={{ background: "#FEEB19" }}>
+          <Icon name="MessageCircleQuestion" size={14} />
+        </div>
+        <p className="font-semibold text-black text-sm leading-snug mb-3">{item.question}</p>
+        <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+          {item.answer.split("\n\n").map((para, i) => (
+            <p key={i} className="text-xs text-gray-500 leading-relaxed">
+              {para}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QAMobileCarousel({ items }: { items: QAItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
       ref={scrollRef}
-      className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
+      className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
       style={{ scrollbarWidth: "none" }}
     >
       {items.map((item, i) => (
-        <div key={i} className="w-[82vw] max-w-sm shrink-0 snap-start">
-          <QACard item={item} />
-        </div>
+        <QAMobileCard key={i} item={item} />
       ))}
     </div>
   );
@@ -108,16 +126,16 @@ export default function UsefulYandexQA() {
 
         {currentGroup && currentGroup.items.length > 0 && (
           <>
-            {/* Desktop: grid of cards */}
-            <div className="hidden md:grid grid-cols-2 gap-4">
+            {/* Desktop: accordion list */}
+            <div className="hidden md:flex flex-col gap-3">
               {currentGroup.items.map((item, i) => (
-                <QACard key={i} item={item} />
+                <QAAccordion key={i} item={item} />
               ))}
             </div>
 
-            {/* Mobile: carousel */}
+            {/* Mobile: horizontal carousel with full cards */}
             <div className="md:hidden">
-              <QACarousel items={currentGroup.items} />
+              <QAMobileCarousel items={currentGroup.items} />
             </div>
           </>
         )}
