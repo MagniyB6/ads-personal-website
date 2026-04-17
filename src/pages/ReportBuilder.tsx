@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
-  ScatterChart, Scatter, ZAxis,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -254,9 +253,46 @@ function BlockImageUploader({ value, preview, position, crop, onFileChange, onPo
   );
 }
 
+// ─── SVG пузыри (мини-превью) ─────────────────────────────────────────────────
+function BubblePreview({ entries, height = 140 }: { entries: ChartEntry[]; height: number }) {
+  if (!entries.length) return null;
+  const max = Math.max(...entries.map(e => e.value), 1);
+  const W = 400; const H = height;
+  const n = entries.length;
+  const maxR = Math.min(W / (n + 1), H * 0.38);
+  const minR = maxR * 0.3;
+  const placed = entries.map((e, i) => {
+    const r = minR + (maxR - minR) * Math.sqrt(e.value / max);
+    let x: number, y: number;
+    if (n === 1) { x = W / 2; y = H / 2; }
+    else if (n <= 4) { x = W / (n + 1) * (i + 1); y = H / 2; }
+    else {
+      const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+      x = W / 2 + Math.cos(angle) * Math.min(W, H) * 0.3;
+      y = H / 2 + Math.sin(angle) * Math.min(W, H) * 0.3;
+    }
+    return { x, y, r, label: e.label, value: e.value, color: CHART_COLORS[i % CHART_COLORS.length] };
+  });
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height, display: "block" }}>
+      {placed.map((b, i) => (
+        <g key={i}>
+          <circle cx={b.x} cy={b.y} r={b.r} fill={b.color} opacity={0.9} />
+          <text x={b.x} y={b.y - 2} textAnchor="middle" fontSize={Math.max(8, b.r * 0.3)} fill="#fff" fontWeight="700">
+            {b.label.length > 10 ? b.label.slice(0, 9) + "…" : b.label}
+          </text>
+          <text x={b.x} y={b.y + b.r * 0.45 + 4} textAnchor="middle" fontSize={Math.max(7, b.r * 0.28)} fill="rgba(255,255,255,0.85)">
+            {b.value}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 // ─── Редактор графика ─────────────────────────────────────────────────────────
 function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartData) => void }) {
-  const addEntry = () => onChange({ ...data, entries: [...data.entries, { label: `Строка ${data.entries.length + 1}`, value: 0 }] });
+  const addEntry = () => onChange({ ...data, entries: [...data.entries, { label: `Показатель ${data.entries.length + 1}`, value: 0 }] });
   const removeEntry = (i: number) => onChange({ ...data, entries: data.entries.filter((_, idx) => idx !== i) });
   const updateEntry = (i: number, patch: Partial<ChartEntry>) =>
     onChange({ ...data, entries: data.entries.map((e, idx) => idx === i ? { ...e, ...patch } : e) });
@@ -276,6 +312,12 @@ function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartD
             </button>
           ))}
         </div>
+        {data.type === "line" && (
+          <p className="text-xs text-gray-400 mt-1.5">Каждый показатель — цветная точка на линии динамики</p>
+        )}
+        {data.type === "bubble" && (
+          <p className="text-xs text-gray-400 mt-1.5">Размер пузыря = значение показателя</p>
+        )}
       </div>
 
       {/* Данные */}
@@ -297,13 +339,13 @@ function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartD
         </div>
         <button onClick={addEntry}
           className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-black transition-colors">
-          <Icon name="Plus" size={12} />Добавить строку
+          <Icon name="Plus" size={12} />Добавить показатель
         </button>
       </div>
 
       {/* Мини-превью */}
       {data.entries.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-3">
+        <div className="bg-gray-50 rounded-xl border border-gray-100 p-3">
           <p className="text-xs text-gray-400 mb-2">Предпросмотр</p>
           {data.type === "pie" ? (
             <ResponsiveContainer width="100%" height={160}>
@@ -317,27 +359,18 @@ function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartD
           ) : data.type === "line" ? (
             <ResponsiveContainer width="100%" height={120}>
               <LineChart data={preview}>
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                <YAxis tick={{ fontSize: 9 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="value" stroke={CHART_COLORS[0]} strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="value" stroke={CHART_COLORS[0]} strokeWidth={2}
+                  dot={(props) => {
+                    const { cx, cy, index } = props;
+                    return <circle key={index} cx={cx} cy={cy} r={5} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="#fff" strokeWidth={1.5} />;
+                  }} />
               </LineChart>
             </ResponsiveContainer>
           ) : data.type === "bubble" ? (
-            <ResponsiveContainer width="100%" height={140}>
-              <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                <XAxis type="number" dataKey="x" tick={{ fontSize: 9 }}
-                  tickFormatter={v => data.entries[v - 1]?.label || ""}
-                  domain={[0.5, data.entries.length + 0.5]}
-                  ticks={data.entries.map((_, i) => i + 1)} />
-                <YAxis type="number" dataKey="y" tick={{ fontSize: 9 }} />
-                <ZAxis type="number" dataKey="z" range={[80, 600]} />
-                <Tooltip />
-                <Scatter data={data.entries.map((e, i) => ({ x: i + 1, y: e.value, z: e.value, name: e.label }))}>
-                  {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
+            <BubblePreview entries={data.entries} height={140} />
           ) : (
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={preview}>
