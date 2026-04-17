@@ -123,7 +123,7 @@ export default function UsefulYandexQA() {
               <Carousel opts={{ align: "start", loop: true }} className="w-full">
                 <CarouselContent className="-ml-4">
                   {currentGroup.items.map((item, i) => (
-                    <CarouselItem key={i} className="pl-4 basis-[85%]">
+                    <CarouselItem key={i} className="pl-4 basis-[80%]">
                       <QAMobileCard item={item} />
                     </CarouselItem>
                   ))}

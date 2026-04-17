@@ -14,7 +14,7 @@ export default function RsyBlock({ sections }: { sections: Section[] }) {
         className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors text-left"
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#FEEB19" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#FEEB19" }}>
             <Icon name="LayoutGrid" size={20} />
           </div>
           <div>
