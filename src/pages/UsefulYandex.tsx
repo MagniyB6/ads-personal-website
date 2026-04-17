@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import RsyBlock from "@/components/yandex/RsyBlock";
 import { RSY_SECTIONS } from "@/components/yandex/rsySitesData";
-import QASection from "@/components/yandex/QASection";
 
 export default function UsefulYandex() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -46,7 +45,23 @@ export default function UsefulYandex() {
 
           <RsyBlock sections={RSY_SECTIONS} />
 
-          <QASection />
+          <div className="rounded-2xl border border-gray-200 overflow-hidden">
+            <Link
+              to="/useful/yandex/qa"
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#FEEB19" }}>
+                  <Icon name="MessageCircleQuestion" size={20} />
+                </div>
+                <div>
+                  <p className="font-bold text-black text-base">Вопрос — ответ</p>
+                  <p className="text-sm text-gray-400 mt-0.5">Ответы на частые вопросы по Яндекс Директу</p>
+                </div>
+              </div>
+              <Icon name="ChevronRight" size={20} className="text-gray-400 shrink-0" />
+            </Link>
+          </div>
         </div>
       </main>
     </div>
