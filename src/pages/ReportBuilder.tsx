@@ -365,17 +365,19 @@ function CoverImageUploader({ preview, onChange }: { preview: string; onChange: 
       <p className="text-xs font-semibold text-gray-600 mb-1">Обложка (необязательно)</p>
       {sizeError && <p className="text-xs text-red-500 mb-1">{sizeError}</p>}
       {preview ? (
-        <div className="relative rounded-xl overflow-hidden bg-gray-100 h-32">
-          <img src={preview} alt="" className="w-full h-full object-cover" />
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg overflow-hidden bg-gray-100 shrink-0" style={{ width: 96, height: 64 }}>
+            <img src={preview} alt="" className="w-full h-full object-cover block" />
+          </div>
           <button onClick={() => onChange(null, "")}
-            className="absolute top-2 right-2 px-2.5 py-1.5 rounded-lg bg-red-500/90 text-white text-xs font-semibold shadow">
-            <Icon name="Trash2" size={12} />
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-100 text-xs font-semibold hover:bg-red-100 transition-colors">
+            <Icon name="Trash2" size={12} />Удалить
           </button>
         </div>
       ) : (
         <div onClick={() => inputRef.current?.click()}
-          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 h-20 flex items-center justify-center gap-2 text-gray-400 transition-all">
-          <Icon name="ImagePlus" size={18} />
+          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 hover:border-gray-400 py-4 flex items-center justify-center gap-2 text-gray-400 transition-all">
+          <Icon name="ImagePlus" size={16} />
           <span className="text-xs">Загрузить обложку (до 5 MB)</span>
         </div>
       )}
@@ -503,10 +505,19 @@ export default function ReportBuilder() {
           </div>
         ) : (
           <>
-            <div className="mb-8">
+            <div className="mb-6">
               <span className="tag mb-4 inline-block">инструмент</span>
               <h1 className="text-3xl md:text-4xl font-bold text-black leading-tight mb-2">Отчёт для клиента</h1>
               <p className="text-gray-500 text-sm">Заполни блоки — получишь красивую страницу-отчёт со ссылкой и PDF. Данные хранятся 5 часов.</p>
+            </div>
+
+            {/* Баннер: экспериментально */}
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-6">
+              <Icon name="FlaskConical" size={16} className="shrink-0 mt-0.5 text-amber-500" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Инструмент в разработке</p>
+                <p className="text-xs text-amber-600 mt-0.5">Это экспериментальный раздел — функции могут работать нестабильно. Мы активно его дорабатываем.</p>
+              </div>
             </div>
 
             {/* Титульный слайд */}

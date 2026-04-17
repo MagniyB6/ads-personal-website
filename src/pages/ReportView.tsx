@@ -3,7 +3,6 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
-  ScatterChart, Scatter, ZAxis,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
@@ -11,7 +10,6 @@ const REPORTS_URL = "https://functions.poehali.dev/f2a35ab0-9bed-49b0-9d37-c7166
 const UPLOAD_URL = "https://functions.poehali.dev/8bcfffb0-13a1-4623-b29b-d28de29b3d36";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-// Размер слайда PDF (фиксированный)
 const SLIDE_W = 1200;
 const SLIDE_H = 675;
 
@@ -48,9 +46,9 @@ type Report = {
   blocks: Block[];
 };
 
-// ── утилиты ─────────────────────────────────────────────────────────────────
+type EditBlock = Block & { _imageFile?: File; _imagePreview?: string };
 
-function uid() { return Math.random().toString(36).slice(2, 10); }
+// ── утилиты ──────────────────────────────────────────────────────────────────
 
 function formatDate(d?: string) {
   if (!d) return "";
@@ -75,66 +73,112 @@ function fileToBase64(file: File): Promise<{ data: string; type: string }> {
   });
 }
 
-// Стиль кадрированного изображения (абсолютное позиционирование внутри overflow:hidden)
+// Стиль изображения с кадрированием внутри контейнера с overflow:hidden
 function cropImgStyle(crop?: CropArea): React.CSSProperties {
-  if (!crop) return { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" };
+  if (!crop) return { width: "100%", height: "100%", objectFit: "cover", display: "block" };
+  // Показываем только область crop через трансформацию масштабирования
+  const scaleX = 1 / crop.w;
+  const scaleY = 1 / crop.h;
   return {
-    position: "absolute",
-    width: `${(1 / crop.w) * 100}%`,
-    height: `${(1 / crop.h) * 100}%`,
-    top: `${-(crop.y / crop.h) * 100}%`,
-    left: `${-(crop.x / crop.w) * 100}%`,
+    width: `${scaleX * 100}%`,
+    height: `${scaleY * 100}%`,
     objectFit: "cover",
+    display: "block",
+    transform: `translate(-${crop.x * scaleX * 100}%, -${crop.y * scaleY * 100}%)`,
+    flexShrink: 0,
   };
 }
 
-// ── Графики ──────────────────────────────────────────────────────────────────
+// ── Пузырьковый график (SVG, без осей) ───────────────────────────────────────
+
+function BubbleChart({ entries, height = 240 }: { entries: ChartEntry[]; height: number }) {
+  if (!entries.length) return null;
+  const max = Math.max(...entries.map(e => e.value), 1);
+  // Расставляем пузыри по кругу
+  const W = 500;
+  const H = height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const maxR = Math.min(W, H) * 0.22;
+  const minR = maxR * 0.25;
+
+  // Простая упаковка: размещаем по спирали
+  const placed: { x: number; y: number; r: number; label: string; value: number; color: string }[] = [];
+  const n = entries.length;
+
+  entries.forEach((e, i) => {
+    const r = minR + (maxR - minR) * (e.value / max);
+    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+    const dist = n === 1 ? 0 : Math.min(W, H) * 0.28;
+    placed.push({
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      r,
+      label: e.label,
+      value: e.value,
+      color: CHART_COLORS[i % CHART_COLORS.length],
+    });
+  });
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height }} aria-label="bubble chart">
+      {placed.map((b, i) => (
+        <g key={i}>
+          <circle cx={b.x} cy={b.y} r={b.r} fill={b.color} opacity={0.85} />
+          <text x={b.x} y={b.y - 4} textAnchor="middle" fontSize={Math.max(9, b.r * 0.38)} fill="#fff" fontWeight="600">
+            {b.label.length > 10 ? b.label.slice(0, 9) + "…" : b.label}
+          </text>
+          <text x={b.x} y={b.y + b.r * 0.42 + 4} textAnchor="middle" fontSize={Math.max(8, b.r * 0.35)} fill="#fff" opacity={0.8}>
+            {b.value}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ── Графики ───────────────────────────────────────────────────────────────────
 
 function ReportChart({ data, isDark, height = 240 }: { data: ChartData; isDark: boolean; height?: number }) {
-  const tc = isDark ? "#aaa" : "#555";
-  const colors = CHART_COLORS;
+  const tc = isDark ? "#999" : "#555";
+
+  if (data.type === "bubble") {
+    return <BubbleChart entries={data.entries} height={height} />;
+  }
 
   if (data.type === "pie") return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
         <Pie data={data.entries.map(e => ({ name: e.label, value: e.value }))}
-          dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={height * 0.35}
+          dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={height * 0.34}
           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-          {data.entries.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+          {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
         </Pie>
-        <Tooltip /><Legend wrapperStyle={{ color: tc, fontSize: 12 }} />
+        <Tooltip />
+        <Legend wrapperStyle={{ color: tc, fontSize: 12 }} />
       </PieChart>
     </ResponsiveContainer>
   );
 
-  if (data.type === "line") return (
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data.entries.map(e => ({ name: e.label, value: e.value }))}>
-        <XAxis dataKey="name" tick={{ fill: tc, fontSize: 12 }} />
-        <YAxis tick={{ fill: tc, fontSize: 12 }} />
-        <Tooltip />
-        <Line type="monotone" dataKey="value" stroke={colors[0]} strokeWidth={3} dot={{ r: 5, fill: colors[0] }} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-
-  if (data.type === "bubble") {
-    const max = Math.max(...data.entries.map(e => e.value || 1), 1);
-    const pts = data.entries.map((e, i) => ({ x: i + 1, y: e.value, z: e.value, name: e.label }));
+  // Линейный: каждый показатель — отдельная линия (каждый entry как отдельный датасет)
+  if (data.type === "line") {
+    // Трактуем данные как серию точек с подписями по оси X
+    // Каждый entry — отдельная «серия» на одном x-значении
+    // Перегруппируем: строим массив [{name:"1"}, {name:"2"}...] с ключами серий
+    const seriesData = data.entries.map((e, i) => ({ name: e.label, [`v${i}`]: e.value }));
     return (
       <ResponsiveContainer width="100%" height={height}>
-        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-          <XAxis type="number" dataKey="x" tick={{ fill: tc, fontSize: 11 }}
-            tickFormatter={v => data.entries[v - 1]?.label || ""}
-            domain={[0.5, data.entries.length + 0.5]}
-            ticks={data.entries.map((_, i) => i + 1)} />
-          <YAxis type="number" dataKey="y" tick={{ fill: tc, fontSize: 11 }} />
-          <ZAxis type="number" dataKey="z" range={[300, Math.max(2000, max * 15)]} />
-          <Tooltip formatter={(_v, _n, p) => [(p.payload as {y:number}).y, (p.payload as {name:string}).name]} />
-          <Scatter data={pts}>
-            {pts.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
-          </Scatter>
-        </ScatterChart>
+        <LineChart data={seriesData}>
+          <XAxis dataKey="name" tick={{ fill: tc, fontSize: 11 }} />
+          <YAxis tick={{ fill: tc, fontSize: 11 }} />
+          <Tooltip />
+          <Legend wrapperStyle={{ color: tc, fontSize: 11 }} />
+          {data.entries.map((e, i) => (
+            <Line key={i} type="monotone" dataKey={`v${i}`} name={e.label}
+              stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2.5}
+              dot={{ r: 4, fill: CHART_COLORS[i % CHART_COLORS.length] }} />
+          ))}
+        </LineChart>
       </ResponsiveContainer>
     );
   }
@@ -146,16 +190,16 @@ function ReportChart({ data, isDark, height = 240 }: { data: ChartData; isDark: 
         <YAxis tick={{ fill: tc, fontSize: 12 }} />
         <Tooltip />
         <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-          {data.entries.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+          {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
-// ── Слайды (экранные — адаптивные) ──────────────────────────────────────────
+// ── Слайд-обёртка ──────────────────────────────────────────────────────────
 
-function SlideShell({ isDark, children, minH = 320 }: { isDark: boolean; children: React.ReactNode; minH?: number }) {
+function SlideShell({ isDark, children, minH = 280 }: { isDark: boolean; children: React.ReactNode; minH?: number }) {
   return (
     <div style={{
       background: isDark ? "#0a0a0a" : "#ffffff",
@@ -170,21 +214,12 @@ function SlideShell({ isDark, children, minH = 320 }: { isDark: boolean; childre
   );
 }
 
-type EditBlock = Block & { _imageFile?: File; _imagePreview?: string };
-
-interface SlideProps {
-  report: Report;
-  blockIndex?: number;           // для контентных слайдов
-  block?: EditBlock;
-  editing?: boolean;
-  onUpdateBlock?: (patch: Partial<EditBlock>) => void;
-  onUploadImage?: (file: File) => Promise<string>;
-}
+// ── Обложка (экранная) ───────────────────────────────────────────────────────
 
 function CoverSlideScreen({ report, editing, onUpdate }: {
   report: Report;
   editing?: boolean;
-  onUpdate?: (patch: Partial<Report>) => void;
+  onUpdate?: (patch: Partial<Report> & { _coverFile?: File }) => void;
 }) {
   const isDark = report.theme === "dark";
   const bg = isDark ? "#0a0a0a" : "#ffffff";
@@ -193,44 +228,45 @@ function CoverSlideScreen({ report, editing, onUpdate }: {
   const line = isDark ? "#ffffff" : "#0a0a0a";
 
   return (
-    <div style={{ background: bg, border: `1px solid ${isDark?"rgba(255,255,255,0.1)":"#e5e7eb"}`, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
+    <div style={{ background: bg, border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb"}`, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
       <div style={{ position: "relative", minHeight: 320, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "44px 52px" }}>
         {report.cover_image_url && (
           <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-            <img src={report.cover_image_url} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.25 }} crossOrigin="anonymous" />
+            <img
+              src={report.cover_image_url}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.3, display: "block" }}
+            />
           </div>
         )}
         <div style={{ position: "relative", zIndex: 2 }}>
           <div style={{ width: 36, height: 3, background: line, marginBottom: 14 }} />
           {editing ? (
             <input value={report.title} onChange={e => onUpdate?.({ title: e.target.value })}
-              style={{ color: sub, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.4)", borderRadius: 4, padding: "2px 4px", width: "100%" }} />
+              style={{ color: sub, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.5)", borderRadius: 4, padding: "2px 6px", width: "100%", fontFamily: "inherit" }} />
           ) : (
             <p style={{ color: sub, fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{report.title}</p>
           )}
           {editing ? (
             <input value={report.project_name} onChange={e => onUpdate?.({ project_name: e.target.value })}
-              style={{ color: fg, fontSize: "clamp(26px,4vw,54px)", fontWeight: 900, lineHeight: 1.1, margin: 0, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.4)", borderRadius: 4, padding: "2px 4px", width: "100%" }} />
+              style={{ color: fg, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, lineHeight: 1.1, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.5)", borderRadius: 4, padding: "2px 6px", width: "100%", fontFamily: "inherit" }} />
           ) : (
-            <h1 style={{ color: fg, fontSize: "clamp(26px,4vw,54px)", fontWeight: 900, lineHeight: 1.1, margin: 0 }}>{report.project_name}</h1>
+            <h1 style={{ color: fg, fontSize: "clamp(26px,4vw,52px)", fontWeight: 900, lineHeight: 1.1, margin: 0 }}>{report.project_name}</h1>
           )}
           {(report.date_from || report.date_to) && (
-            <p style={{ color: sub, fontSize: 15, marginTop: 14 }}>
-              {formatDate(report.date_from)} — {formatDate(report.date_to)}
-            </p>
+            <p style={{ color: sub, fontSize: 15, marginTop: 14 }}>{formatDate(report.date_from)} — {formatDate(report.date_to)}</p>
           )}
         </div>
         {editing && (
           <div style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
-            <label style={{ cursor: "pointer", fontSize: 11, color: isDark ? "#ccc" : "#555", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", padding: "4px 10px", borderRadius: 8 }}>
+            <label style={{ cursor: "pointer", fontSize: 11, padding: "5px 12px", borderRadius: 8, border: `1px solid ${isDark ? "rgba(255,255,255,0.2)" : "#d1d5db"}`, color: isDark ? "#ccc" : "#555", background: isDark ? "rgba(255,255,255,0.06)" : "#f9fafb" }}>
               {report.cover_image_url ? "Сменить обложку" : "+ Обложка"}
-              <input type="file" accept="image/*" style={{ display: "none" }}
-                onChange={e => {
-                  const f = e.target.files?.[0];
-                  if (!f || f.size > MAX_IMAGE_BYTES) return;
-                  onUpdate?.({ cover_image_url: URL.createObjectURL(f), _coverFile: f } as Partial<Report> & { _coverFile: File });
-                  e.target.value = "";
-                }} />
+              <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => {
+                const f = e.target.files?.[0];
+                if (!f || f.size > MAX_IMAGE_BYTES) return;
+                onUpdate?.({ cover_image_url: URL.createObjectURL(f), _coverFile: f });
+                e.target.value = "";
+              }} />
             </label>
           </div>
         )}
@@ -239,19 +275,20 @@ function CoverSlideScreen({ report, editing, onUpdate }: {
   );
 }
 
-function ContentSlideScreen({ block, index, report, editing, onUpdateBlock, onUploadImage }: {
+// ── Контентный слайд (экранный) ───────────────────────────────────────────────
+
+function ContentSlideScreen({ block, index, report, editing, onUpdateBlock }: {
   block: EditBlock; index: number; report: Report;
   editing?: boolean;
   onUpdateBlock?: (patch: Partial<EditBlock>) => void;
-  onUploadImage?: (file: File) => Promise<string>;
 }) {
   const isDark = report.theme === "dark";
   const bg = isDark ? "#0a0a0a" : "#ffffff";
   const fg = isDark ? "#f0f0f0" : "#0a0a0a";
-  const sub = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)";
+  const sub = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.58)";
   const badgeBg = isDark ? "#ffffff" : "#0a0a0a";
   const badgeFg = isDark ? "#0a0a0a" : "#ffffff";
-  const border = isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb";
+  const borderColor = isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb";
 
   const hasImage = !!(block._imagePreview || block.image_url);
   const hasChart = block.block_type === "chart" && !!block.chart_data;
@@ -259,55 +296,53 @@ function ContentSlideScreen({ block, index, report, editing, onUpdateBlock, onUp
   const displaySrc = block._imagePreview || block.image_url;
 
   const badge = (
-    <span style={{ width: 30, height: 30, borderRadius: "50%", background: badgeBg, color: badgeFg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+    <span style={{ width: 30, height: 30, borderRadius: "50%", background: badgeBg, color: badgeFg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
       {index + 1}
     </span>
   );
 
   const headingNode = editing ? (
     <input value={block.heading} onChange={e => onUpdateBlock?.({ heading: e.target.value })}
-      style={{ color: fg, fontSize: "clamp(15px,2vw,21px)", fontWeight: 800, margin: 0, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.4)", borderRadius: 4, padding: "2px 6px", width: "100%" }} />
+      style={{ color: fg, fontSize: "clamp(15px,2vw,20px)", fontWeight: 800, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.5)", borderRadius: 4, padding: "2px 6px", width: "100%", fontFamily: "inherit" }} />
   ) : (
-    <h2 style={{ color: fg, fontSize: "clamp(15px,2vw,21px)", fontWeight: 800, margin: 0 }}>{block.heading}</h2>
+    <h2 style={{ color: fg, fontSize: "clamp(15px,2vw,20px)", fontWeight: 800, margin: 0 }}>{block.heading}</h2>
   );
 
   const bodyNode = editing ? (
-    <textarea value={block.body_text} onChange={e => onUpdateBlock?.({ body_text: e.target.value })} rows={4}
-      style={{ color: sub, fontSize: "clamp(12px,1.4vw,14px)", lineHeight: 1.75, margin: 0, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.4)", borderRadius: 4, padding: "2px 6px", width: "100%", resize: "vertical" }} />
+    <textarea value={block.body_text} onChange={e => onUpdateBlock?.({ body_text: e.target.value })} rows={3}
+      style={{ color: sub, fontSize: 13, lineHeight: 1.7, background: "transparent", border: "none", outline: "1px dashed rgba(128,128,128,0.5)", borderRadius: 4, padding: "2px 6px", width: "100%", resize: "vertical", fontFamily: "inherit" }} />
   ) : block.body_text ? (
-    <p style={{ color: sub, fontSize: "clamp(12px,1.4vw,14px)", lineHeight: 1.75, whiteSpace: "pre-wrap", margin: 0 }}>{block.body_text}</p>
+    <p style={{ color: sub, fontSize: 14, lineHeight: 1.75, whiteSpace: "pre-wrap", margin: 0 }}>{block.body_text}</p>
   ) : null;
 
-  // Загрузчик изображения в режиме редактирования (компактный)
+  // Компактный загрузчик в режиме редактирования
   const imgUploadNode = editing && (
-    <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
       {hasImage && (
-        <div style={{ position: "relative", width: 80, height: 56, borderRadius: 6, overflow: "hidden", border: `1px solid ${border}`, flexShrink: 0 }}>
-          <img src={displaySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <button onClick={() => onUpdateBlock?.({ _imageFile: undefined, _imagePreview: "", image_url: "" })}
-            style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+        <div style={{ width: 80, height: 52, borderRadius: 6, overflow: "hidden", border: `1px solid ${borderColor}`, flexShrink: 0 }}>
+          <img src={displaySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
       )}
-      <label style={{ cursor: "pointer", fontSize: 11, padding: "4px 10px", borderRadius: 8, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", color: isDark ? "#ccc" : "#555" }}>
-        {hasImage ? "Сменить фото" : "+ Добавить фото"}
-        <input type="file" accept="image/*" style={{ display: "none" }}
-          onChange={async e => {
-            const f = e.target.files?.[0];
-            if (!f || f.size > MAX_IMAGE_BYTES) return;
-            onUpdateBlock?.({ _imageFile: f, _imagePreview: URL.createObjectURL(f), image_crop: undefined });
-            e.target.value = "";
-          }} />
+      <label style={{ cursor: "pointer", fontSize: 11, padding: "4px 10px", borderRadius: 8, border: `1px solid ${borderColor}`, color: isDark ? "#ccc" : "#555", background: isDark ? "rgba(255,255,255,0.05)" : "#f9fafb" }}>
+        {hasImage ? "Сменить" : "+ Фото"}
+        <input type="file" accept="image/*" style={{ display: "none" }} onChange={async e => {
+          const f = e.target.files?.[0];
+          if (!f || f.size > MAX_IMAGE_BYTES) return;
+          onUpdateBlock?.({ _imageFile: f, _imagePreview: URL.createObjectURL(f), image_crop: undefined });
+          e.target.value = "";
+        }} />
       </label>
       {hasImage && (
+        <button onClick={() => onUpdateBlock?.({ _imageFile: undefined, _imagePreview: "", image_url: "" })}
+          style={{ fontSize: 11, padding: "4px 8px", borderRadius: 8, border: `1px solid ${borderColor}`, color: "#ef4444", background: "transparent", cursor: "pointer" }}>
+          Удалить
+        </button>
+      )}
+      {hasImage && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {[
-            { v: "left" as const, l: "◀ Слева" },
-            { v: "right" as const, l: "Справа ▶" },
-            { v: "bg" as const, l: "Фон" },
-            { v: "full" as const, l: "Весь" },
-          ].map(p => (
+          {[{ v: "left" as const, l: "◀" }, { v: "right" as const, l: "▶" }, { v: "bg" as const, l: "Фон" }, { v: "full" as const, l: "Весь" }].map(p => (
             <button key={p.v} onClick={() => onUpdateBlock?.({ image_position: p.v })}
-              style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${block.image_position === p.v ? (isDark?"#fff":"#000") : border}`, background: block.image_position === p.v ? (isDark?"#fff":"#000") : "transparent", color: block.image_position === p.v ? (isDark?"#000":"#fff") : sub, cursor: "pointer" }}>
+              style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${block.image_position === p.v ? (isDark ? "#fff" : "#000") : borderColor}`, background: block.image_position === p.v ? (isDark ? "#fff" : "#000") : "transparent", color: block.image_position === p.v ? (isDark ? "#000" : "#fff") : sub, cursor: "pointer" }}>
               {p.l}
             </button>
           ))}
@@ -316,29 +351,18 @@ function ContentSlideScreen({ block, index, report, editing, onUpdateBlock, onUp
     </div>
   );
 
-  // Фон / полный слайд
-  if ((pos === "bg" || pos === "full") && hasImage) {
-    return (
-      <SlideShell isDark={isDark} minH={280}>
-        <div style={{ position: "relative", minHeight: 280, display: "flex", flexDirection: "column", justifyContent: pos === "full" ? "flex-end" : "center" }}>
-          <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-            <img src={displaySrc} alt="" style={cropImgStyle(block.image_crop)} crossOrigin="anonymous" />
-            <div style={{ position: "absolute", inset: 0, background: isDark ? "rgba(0,0,0,0.62)" : "rgba(255,255,255,0.78)" }} />
-          </div>
-          <div style={{ position: "relative", zIndex: 2, padding: "28px 32px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>{badge}{headingNode}</div>
-            {bodyNode}
-            {imgUploadNode}
-          </div>
-        </div>
-      </SlideShell>
-    );
-  }
+  const commonShell: React.CSSProperties = {
+    background: bg,
+    border: `1px solid ${borderColor}`,
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 20,
+  };
 
-  // Для графика
+  // График
   if (hasChart && block.chart_data) {
     return (
-      <SlideShell isDark={isDark}>
+      <div style={commonShell}>
         <div style={{ padding: "28px 32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>{badge}{headingNode}</div>
           {bodyNode}
@@ -347,18 +371,35 @@ function ContentSlideScreen({ block, index, report, editing, onUpdateBlock, onUp
             <ReportChart data={block.chart_data} isDark={isDark} />
           </div>
         </div>
-      </SlideShell>
+      </div>
+    );
+  }
+
+  // Полный слайд / фон
+  if ((pos === "full" || pos === "bg") && hasImage) {
+    return (
+      <div style={{ ...commonShell, position: "relative", minHeight: 280 }}>
+        <div style={{ position: "absolute", inset: 0 }}>
+          <img src={displaySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: isDark ? "rgba(0,0,0,0.62)" : "rgba(255,255,255,0.78)" }} />
+        </div>
+        <div style={{ position: "relative", zIndex: 2, padding: "28px 32px", minHeight: 280, display: "flex", flexDirection: "column", justifyContent: pos === "full" ? "flex-end" : "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>{badge}{headingNode}</div>
+          {bodyNode}
+          {imgUploadNode}
+        </div>
+      </div>
     );
   }
 
   // Слева / Справа
-  const imgEl = hasImage ? (
-    <div style={{ flex: "0 0 45%", position: "relative", minHeight: 220, overflow: "hidden" }}>
-      <img src={displaySrc} alt="" style={cropImgStyle(block.image_crop)} crossOrigin="anonymous" />
+  const imgBox = hasImage ? (
+    <div style={{ flex: "0 0 44%", overflow: "hidden", minHeight: 220 }}>
+      <img src={displaySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
     </div>
   ) : null;
 
-  const textEl = (
+  const textBox = (
     <div style={{ flex: 1, padding: "28px 32px", display: "flex", flexDirection: "column", gap: 12, justifyContent: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>{badge}{headingNode}</div>
       {bodyNode}
@@ -367,37 +408,30 @@ function ContentSlideScreen({ block, index, report, editing, onUpdateBlock, onUp
   );
 
   return (
-    <SlideShell isDark={isDark}>
-      <div style={{ display: "flex" }}>
-        {pos === "left" && imgEl}
-        {textEl}
-        {pos !== "left" && imgEl}
-      </div>
-    </SlideShell>
+    <div style={{ ...commonShell, display: "flex" }}>
+      {pos === "left" && imgBox}
+      {textBox}
+      {pos !== "left" && imgBox}
+    </div>
   );
 }
 
-// ── PDF-слайды (фиксированный размер SLIDE_W × SLIDE_H) ─────────────────────
+// ── PDF-слайды (фиксированный SLIDE_W × SLIDE_H) ─────────────────────────────
 
 function PdfCoverSlide({ report }: { report: Report }) {
   const isDark = report.theme === "dark";
-  const bg = isDark ? "#0a0a0a" : "#ffffff";
-  const fg = isDark ? "#ffffff" : "#0a0a0a";
-  const sub = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
-  const line = isDark ? "#ffffff" : "#0a0a0a";
-
   return (
-    <div style={{ width: SLIDE_W, height: SLIDE_H, background: bg, position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "72px 96px" }}>
+    <div style={{ width: SLIDE_W, height: SLIDE_H, background: isDark ? "#0a0a0a" : "#ffffff", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "72px 96px" }}>
       {report.cover_image_url && (
         <img src={report.cover_image_url} alt="" crossOrigin="anonymous"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.25 }} />
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.28 }} />
       )}
       <div style={{ position: "relative", zIndex: 2 }}>
-        <div style={{ width: 48, height: 4, background: line, marginBottom: 22 }} />
-        <p style={{ color: sub, fontSize: 14, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase", marginBottom: 18 }}>{report.title}</p>
-        <h1 style={{ color: fg, fontSize: 72, fontWeight: 900, lineHeight: 1.05, margin: 0 }}>{report.project_name}</h1>
+        <div style={{ width: 48, height: 4, background: isDark ? "#fff" : "#0a0a0a", marginBottom: 22 }} />
+        <p style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)", fontSize: 14, fontWeight: 700, letterSpacing: 4, textTransform: "uppercase", margin: "0 0 18px" }}>{report.title}</p>
+        <h1 style={{ color: isDark ? "#fff" : "#0a0a0a", fontSize: 72, fontWeight: 900, lineHeight: 1.05, margin: "0 0 22px" }}>{report.project_name}</h1>
         {(report.date_from || report.date_to) && (
-          <p style={{ color: sub, fontSize: 22, marginTop: 22 }}>{formatDate(report.date_from)} — {formatDate(report.date_to)}</p>
+          <p style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)", fontSize: 22, margin: 0 }}>{formatDate(report.date_from)} — {formatDate(report.date_to)}</p>
         )}
       </div>
     </div>
@@ -414,23 +448,22 @@ function PdfContentSlide({ block, index, report }: { block: Block; index: number
   const hasImage = !!block.image_url;
   const hasChart = block.block_type === "chart" && !!block.chart_data;
   const pos = block.image_position || "right";
-  const pad = "64px 96px";
 
   const badge = (
     <span style={{ width: 44, height: 44, borderRadius: "50%", background: badgeBg, color: badgeFg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
       {index + 1}
     </span>
   );
-  const heading = <h2 style={{ color: fg, fontSize: 40, fontWeight: 800, margin: 0 }}>{block.heading}</h2>;
+  const heading = <h2 style={{ color: fg, fontSize: 40, fontWeight: 800, margin: 0, lineHeight: 1.15 }}>{block.heading}</h2>;
   const body = block.body_text ? <p style={{ color: sub, fontSize: 22, lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{block.body_text}</p> : null;
 
   if (hasChart && block.chart_data) {
     return (
-      <div style={{ width: SLIDE_W, height: SLIDE_H, background: bg, display: "flex", flexDirection: "column", justifyContent: "center", padding: pad, gap: 28 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>{badge}{heading}</div>
+      <div style={{ width: SLIDE_W, height: SLIDE_H, background: bg, display: "flex", flexDirection: "column", padding: "56px 80px", gap: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>{badge}{heading}</div>
         {body}
         <div style={{ flex: 1, minHeight: 0 }}>
-          <ReportChart data={block.chart_data} isDark={isDark} height={320} />
+          <ReportChart data={block.chart_data} isDark={isDark} height={360} />
         </div>
       </div>
     );
@@ -439,10 +472,11 @@ function PdfContentSlide({ block, index, report }: { block: Block; index: number
   if ((pos === "full" || pos === "bg") && hasImage) {
     return (
       <div style={{ width: SLIDE_W, height: SLIDE_H, background: bg, position: "relative", overflow: "hidden" }}>
-        <img src={block.image_url} alt="" crossOrigin="anonymous" style={cropImgStyle(block.image_crop)} />
+        <img src={block.image_url} alt="" crossOrigin="anonymous"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: isDark ? "rgba(0,0,0,0.62)" : "rgba(255,255,255,0.78)" }} />
-        <div style={{ position: "relative", zIndex: 2, height: "100%", display: "flex", flexDirection: "column", justifyContent: pos === "full" ? "flex-end" : "center", padding: pad, gap: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>{badge}{heading}</div>
+        <div style={{ position: "relative", zIndex: 2, height: "100%", display: "flex", flexDirection: "column", justifyContent: pos === "full" ? "flex-end" : "center", padding: "56px 80px", gap: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>{badge}{heading}</div>
           {body}
         </div>
       </div>
@@ -450,14 +484,15 @@ function PdfContentSlide({ block, index, report }: { block: Block; index: number
   }
 
   const imgEl = hasImage ? (
-    <div style={{ flex: "0 0 45%", position: "relative", overflow: "hidden", height: SLIDE_H }}>
-      <img src={block.image_url} alt="" crossOrigin="anonymous" style={cropImgStyle(block.image_crop)} />
+    <div style={{ flex: "0 0 44%", overflow: "hidden", height: SLIDE_H }}>
+      <img src={block.image_url} alt="" crossOrigin="anonymous"
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
     </div>
   ) : null;
 
   const textEl = (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: pad, gap: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>{badge}{heading}</div>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "56px 80px", gap: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>{badge}{heading}</div>
       {body}
     </div>
   );
@@ -471,7 +506,7 @@ function PdfContentSlide({ block, index, report }: { block: Block; index: number
   );
 }
 
-// ── Главный компонент ────────────────────────────────────────────────────────
+// ── Главный компонент ─────────────────────────────────────────────────────────
 
 export default function ReportView() {
   const { id } = useParams<{ id: string }>();
@@ -513,22 +548,19 @@ export default function ReportView() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Сохранить правки
   const handleSave = async () => {
     if (!report || !rawToken) return;
     setSaving(true);
     try {
-      // Загружаем новую обложку, если есть
-      let coverUrl = editCover.cover_image_url || report.cover_image_url;
-      if ((editCover as { _coverFile?: File })._coverFile) {
-        const { data, type } = await fileToBase64((editCover as { _coverFile: File })._coverFile);
+      let coverUrl = editCover.cover_image_url ?? report.cover_image_url;
+      if (editCover._coverFile) {
+        const { data, type } = await fileToBase64(editCover._coverFile);
         const res = await fetch(UPLOAD_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Edit-Token": rawToken },
           body: JSON.stringify({ report_id: id, image_data: data, content_type: type }),
         });
-        const j = await res.json();
-        coverUrl = j.url;
+        coverUrl = (await res.json()).url;
       }
 
       await fetch(`${REPORTS_URL}?id=${id}`, {
@@ -539,12 +571,10 @@ export default function ReportView() {
           title: editCover.title ?? report.title,
           project_name: editCover.project_name ?? report.project_name,
           date_from: report.date_from, date_to: report.date_to,
-          cover_image_url: coverUrl,
-          theme: report.theme,
+          cover_image_url: coverUrl, theme: report.theme,
         }),
       });
 
-      // Загружаем новые изображения блоков
       const savedBlocks = await Promise.all(editBlocks.map(async b => {
         let imgUrl = b.image_url;
         if (b._imageFile) {
@@ -554,8 +584,7 @@ export default function ReportView() {
             headers: { "Content-Type": "application/json", "X-Edit-Token": rawToken },
             body: JSON.stringify({ report_id: id, image_data: data, content_type: type }),
           });
-          const j = await res.json();
-          imgUrl = j.url;
+          imgUrl = (await res.json()).url;
         }
         return { block_type: b.block_type, heading: b.heading, body_text: b.body_text, image_url: imgUrl || null, image_position: b.image_position, image_crop: b.image_crop || null, chart_data: b.chart_data || null };
       }));
@@ -566,9 +595,7 @@ export default function ReportView() {
         body: JSON.stringify({ action: "upsert_blocks", blocks: savedBlocks }),
       });
 
-      // Перезагружаем данные
-      const headers: Record<string, string> = { "X-Edit-Token": rawToken };
-      const fresh = await fetch(`${REPORTS_URL}?id=${id}`, { headers }).then(r => r.json());
+      const fresh = await fetch(`${REPORTS_URL}?id=${id}`, { headers: { "X-Edit-Token": rawToken } }).then(r => r.json());
       setReport(fresh);
       setEditBlocks(fresh.blocks.map((b: Block) => ({ ...b })));
       setEditCover({ title: fresh.title, project_name: fresh.project_name, cover_image_url: fresh.cover_image_url });
@@ -581,29 +608,20 @@ export default function ReportView() {
     }
   };
 
-  // PDF через html2canvas — рендерим скрытые фиксированные слайды
   const downloadPdf = async () => {
     if (!report || !pdfContainerRef.current) return;
     setPdfLoading(true);
     try {
-      // Ждём отрисовку recharts + изображений
-      await new Promise(r => setTimeout(r, 700));
-
+      await new Promise(r => setTimeout(r, 800));
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
-
       const slides = pdfContainerRef.current.querySelectorAll<HTMLElement>(".pdf-sl");
       const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [SLIDE_W, SLIDE_H], compress: true });
-
       for (let i = 0; i < slides.length; i++) {
         const canvas = await html2canvas(slides[i], {
-          scale: 1,
-          useCORS: true,
-          allowTaint: true,
+          scale: 1, useCORS: true, allowTaint: true,
           backgroundColor: report.theme === "dark" ? "#0a0a0a" : "#ffffff",
-          width: SLIDE_W,
-          height: SLIDE_H,
-          logging: false,
+          width: SLIDE_W, height: SLIDE_H, logging: false,
         });
         if (i > 0) pdf.addPage([SLIDE_W, SLIDE_H], "landscape");
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, SLIDE_W, SLIDE_H);
@@ -641,61 +659,50 @@ export default function ReportView() {
   const btnBg = isDark ? "#fff" : "#0a0a0a";
   const btnFg = isDark ? "#0a0a0a" : "#fff";
 
-  // Данные для отображения (с учётом редактирования)
-  const displayBlocks = editing ? editBlocks : (report.blocks as EditBlock[]);
-  const displayTitle = editing ? (editCover.title ?? report.title) : report.title;
-  const displayProjectName = editing ? (editCover.project_name ?? report.project_name) : report.project_name;
-  const displayCoverUrl = editing ? (editCover._coverFile ? editCover.cover_image_url : (editCover.cover_image_url ?? report.cover_image_url)) : report.cover_image_url;
-
-  const reportForSlides: Report = {
+  const displayBlocks: EditBlock[] = editing ? editBlocks : report.blocks.map(b => ({ ...b }));
+  const displayReport: Report = {
     ...report,
-    title: displayTitle,
-    project_name: displayProjectName,
-    cover_image_url: displayCoverUrl,
+    title: editing ? (editCover.title ?? report.title) : report.title,
+    project_name: editing ? (editCover.project_name ?? report.project_name) : report.project_name,
+    cover_image_url: editing ? (editCover.cover_image_url ?? report.cover_image_url) : report.cover_image_url,
   };
 
   return (
     <div className="font-golos min-h-screen" style={{ background: pageBg }}>
-      {/* Шапка */}
       <header className="border-b sticky top-0 z-40 backdrop-blur-sm"
         style={{ background: headerBg, borderColor: headerBorder }}>
         <div className="max-w-4xl mx-auto px-4 md:px-8 flex items-center justify-between h-16">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/useful" className="flex items-center gap-1.5 text-sm font-medium shrink-0"
-              style={{ color: mutedColor }}>
+            <Link to="/useful" className="flex items-center gap-1.5 text-sm font-medium shrink-0" style={{ color: mutedColor }}>
               <Icon name="ArrowLeft" size={16} />
               <span className="hidden sm:inline">Полезное</span>
             </Link>
-            <span className="hidden sm:inline shrink-0" style={{ color: isDark ? "rgba(255,255,255,0.15)" : "#d1d5db" }}>|</span>
-            <span className="font-bold text-sm truncate" style={{ color: textColor }}>
-              {report.project_name}
-            </span>
+            <span className="hidden sm:inline shrink-0" style={{ color: isDark ? "rgba(255,255,255,0.12)" : "#d1d5db" }}>|</span>
+            <span className="font-bold text-sm truncate" style={{ color: textColor }}>{report.project_name}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {report.can_edit && (
-              <span className="text-xs hidden lg:block" style={{ color: mutedColor }}>
-                {timeLeft(report.expires_at)}
-              </span>
+            {report.can_edit && !editing && (
+              <span className="text-xs hidden lg:block" style={{ color: mutedColor }}>{timeLeft(report.expires_at)}</span>
             )}
             {report.can_edit && !editing && (
               <button onClick={() => setEditing(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold"
                 style={{ borderColor: isDark ? "rgba(255,255,255,0.2)" : "#e5e7eb", color: textColor }}>
-                <Icon name="Pencil" size={13} />
+                <Icon name="Pencil" size={12} />
                 <span className="hidden sm:inline">Редактировать</span>
               </button>
             )}
             {editing && (
               <>
                 <button onClick={() => { setEditing(false); setEditBlocks(report.blocks.map(b => ({ ...b }))); setEditCover({ title: report.title, project_name: report.project_name, cover_image_url: report.cover_image_url }); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold"
+                  className="px-3 py-1.5 rounded-lg border text-xs font-medium"
                   style={{ borderColor: isDark ? "rgba(255,255,255,0.2)" : "#e5e7eb", color: mutedColor }}>
                   Отмена
                 </button>
                 <button onClick={handleSave} disabled={saving}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-60"
                   style={{ background: btnBg, color: btnFg }}>
-                  {saving ? <Icon name="Loader" size={13} className="animate-spin" /> : <Icon name="Check" size={13} />}
+                  {saving ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />}
                   Сохранить
                 </button>
               </>
@@ -720,52 +727,40 @@ export default function ReportView() {
         </div>
       </header>
 
-      {/* Баннер редактирования */}
       {editing && (
-        <div style={{ background: isDark ? "rgba(255,255,255,0.06)" : "#fffbeb", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#fde68a"}` }}>
+        <div style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#fffbeb", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#fde68a"}` }}>
           <div className="max-w-4xl mx-auto px-4 md:px-8 py-2 flex items-center gap-2">
-            <Icon name="Pencil" size={13} style={{ color: isDark ? "#fff" : "#92400e" } as React.CSSProperties} />
-            <p className="text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "#92400e" }}>
-              Режим редактирования — нажимай на текст прямо в слайдах
+            <Icon name="Pencil" size={12} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "#92400e" } as React.CSSProperties} />
+            <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#92400e" }}>
+              Режим редактирования — редактируй текст прямо в слайдах
             </p>
           </div>
         </div>
       )}
 
-      {/* Контент */}
       <main className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        <CoverSlideScreen
-          report={reportForSlides}
-          editing={editing}
-          onUpdate={patch => setEditCover(prev => ({ ...prev, ...patch }))}
-        />
+        <CoverSlideScreen report={displayReport} editing={editing}
+          onUpdate={patch => setEditCover(prev => ({ ...prev, ...patch }))} />
         {displayBlocks.map((block, i) => (
-          <ContentSlideScreen
-            key={block.id}
-            block={block}
-            index={i}
-            report={reportForSlides}
-            editing={editing}
-            onUpdateBlock={patch => setEditBlocks(prev => prev.map((b, bi) => bi === i ? { ...b, ...patch } : b))}
-          />
+          <ContentSlideScreen key={block.id} block={block} index={i} report={displayReport} editing={editing}
+            onUpdateBlock={patch => setEditBlocks(prev => prev.map((b, bi) => bi === i ? { ...b, ...patch } : b))} />
         ))}
-
         {report.can_edit && !editing && (
           <div className="mt-6 p-4 rounded-2xl flex items-start gap-3"
-            style={{ background: isDark ? "rgba(255,255,255,0.05)" : "#f3f4f6", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb"}` }}>
-            <Icon name="Clock" size={15} className="shrink-0 mt-0.5" style={{ color: mutedColor } as React.CSSProperties} />
-            <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#6b7280" }}>
+            style={{ background: isDark ? "rgba(255,255,255,0.04)" : "#f3f4f6", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "#e5e7eb"}` }}>
+            <Icon name="Clock" size={14} className="shrink-0 mt-0.5" style={{ color: mutedColor } as React.CSSProperties} />
+            <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.55)" : "#6b7280" }}>
               Отчёт удалится <b style={{ color: textColor }}>{new Date(report.expires_at).toLocaleString("ru-RU")}</b>
             </p>
           </div>
         )}
       </main>
 
-      {/* Скрытый PDF-контейнер: фиксированные слайды SLIDE_W × SLIDE_H */}
+      {/* Скрытые PDF-слайды */}
       <div ref={pdfContainerRef} aria-hidden="true"
         style={{ position: "fixed", left: -99999, top: 0, width: SLIDE_W, pointerEvents: "none", zIndex: -1 }}>
         <div className="pdf-sl" style={{ width: SLIDE_W, height: SLIDE_H, overflow: "hidden" }}>
-          <PdfCoverSlide report={reportForSlides} />
+          <PdfCoverSlide report={displayReport} />
         </div>
         {report.blocks.map((block, i) => (
           <div key={block.id} className="pdf-sl" style={{ width: SLIDE_W, height: SLIDE_H, overflow: "hidden" }}>
