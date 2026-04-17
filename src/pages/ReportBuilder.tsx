@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
+  ScatterChart, Scatter, ZAxis,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -38,15 +39,16 @@ const CHART_TYPES = [
   { value: "bar" as const, label: "Столбчатый", icon: "BarChart2" as const },
   { value: "pie" as const, label: "Круговой", icon: "PieChart" as const },
   { value: "line" as const, label: "Линейный", icon: "TrendingUp" as const },
+  { value: "bubble" as const, label: "Пузыри", icon: "Circle" as const },
 ];
 
-const CHART_COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899"];
+const CHART_COLORS = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
 type ImagePosition = "right" | "left" | "bg" | "full";
 type Theme = "dark" | "light";
 type CropArea = { x: number; y: number; w: number; h: number };
 type ChartEntry = { label: string; value: number };
-type ChartData = { type: "bar" | "pie" | "line"; entries: ChartEntry[] };
+type ChartData = { type: "bar" | "pie" | "line" | "bubble"; entries: ChartEntry[] };
 
 type Block = {
   id: string;
@@ -168,8 +170,7 @@ function ImageCropper({ src, crop, onChange, onClose }: {
             </button>
             <button
               onClick={() => { onChange(box); onClose(); }}
-              className="px-5 py-2 rounded-xl text-sm font-bold"
-              style={{ background: "#6366f1", color: "#fff" }}
+              className="px-5 py-2 rounded-xl text-sm font-bold bg-black text-white hover:bg-gray-800 transition-colors"
             >
               Применить
             </button>
@@ -216,23 +217,25 @@ function BlockImageUploader({ value, preview, position, crop, onFileChange, onPo
       {sizeError && <p className="text-xs text-red-500 mb-2">{sizeError}</p>}
 
       {displaySrc ? (
-        <div className="relative rounded-xl overflow-hidden bg-gray-100 h-36">
-          <img src={displaySrc} alt="" className="w-full h-full object-cover" />
-          <div className="absolute bottom-2 right-2 flex gap-1.5">
+        <div className="flex items-start gap-3">
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 shrink-0" style={{ width: 96, height: 64 }}>
+            <img src={displaySrc} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
             <button onClick={() => setShowCrop(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/90 text-xs font-semibold text-gray-700 shadow hover:bg-white transition-colors">
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
               <Icon name="Crop" size={12} />Кадрировать
             </button>
             <button onClick={() => { onFileChange(null, ""); setSizeError(""); }}
-              className="px-2.5 py-1.5 rounded-lg bg-red-500/90 text-white shadow hover:bg-red-500 transition-colors">
+              className="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 transition-colors">
               <Icon name="Trash2" size={12} />
             </button>
           </div>
-          {crop && (
-            <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-              кадрировано
-            </div>
-          )}
+            {crop && (
+              <span className="text-xs text-gray-400">✓ кадрировано</span>
+            )}
+          </div>
         </div>
       ) : (
         <div onClick={() => inputRef.current?.click()}
@@ -283,9 +286,9 @@ function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartD
             <div key={i} className="flex gap-2 items-center">
               <div className="w-3 h-3 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
               <input value={entry.label} onChange={e => updateEntry(i, { label: e.target.value })}
-                placeholder="Название" className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                placeholder="Название" className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-black" />
               <input type="number" value={entry.value} onChange={e => updateEntry(i, { value: Number(e.target.value) })}
-                className="w-20 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                className="w-20 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-black" />
               <button onClick={() => removeEntry(i)} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
                 <Icon name="X" size={12} />
               </button>
@@ -319,6 +322,21 @@ function ChartEditor({ data, onChange }: { data: ChartData; onChange: (d: ChartD
                 <Tooltip />
                 <Line type="monotone" dataKey="value" stroke={CHART_COLORS[0]} strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
+            </ResponsiveContainer>
+          ) : data.type === "bubble" ? (
+            <ResponsiveContainer width="100%" height={140}>
+              <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <XAxis type="number" dataKey="x" tick={{ fontSize: 9 }}
+                  tickFormatter={v => data.entries[v - 1]?.label || ""}
+                  domain={[0.5, data.entries.length + 0.5]}
+                  ticks={data.entries.map((_, i) => i + 1)} />
+                <YAxis type="number" dataKey="y" tick={{ fontSize: 9 }} />
+                <ZAxis type="number" dataKey="z" range={[80, 600]} />
+                <Tooltip />
+                <Scatter data={data.entries.map((e, i) => ({ x: i + 1, y: e.value, z: e.value, name: e.label }))}>
+                  {data.entries.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Scatter>
+              </ScatterChart>
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width="100%" height={120}>
@@ -625,7 +643,7 @@ export default function ReportBuilder() {
                 <Icon name="Plus" size={15} />Текстовый блок
               </button>
               <button onClick={addChartBlock}
-                className="flex-1 rounded-2xl border-2 border-dashed border-indigo-200 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-indigo-300 hover:border-indigo-400 hover:text-indigo-600 transition-all">
+                className="flex-1 rounded-2xl border-2 border-dashed border-gray-200 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-gray-400 hover:border-gray-400 hover:text-black transition-all">
                 <Icon name="BarChart2" size={15} />График
               </button>
             </div>
