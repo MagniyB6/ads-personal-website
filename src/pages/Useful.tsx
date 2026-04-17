@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import { articles, Article } from "@/data/articles";
@@ -29,7 +30,7 @@ export default function Useful() {
         <div className="flex flex-col gap-3 mb-12">
           <Link
             to="/useful/yandex"
-            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
             style={{ borderColor: "#FEEB19", background: "#FEEB1910" }}
           >
             <div className="flex items-center gap-4">
@@ -44,7 +45,7 @@ export default function Useful() {
 
           <Link
             to="/useful/vk"
-            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
             style={{ borderColor: "#2688EB", background: "#2688EB10" }}
           >
             <div className="flex items-center gap-4">
@@ -70,42 +71,20 @@ export default function Useful() {
 }
 
 function ArticleCarousel({ articles }: { articles: Article[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
-  };
-
   return (
-    <div className="relative">
-      {articles.length > 1 && (
-        <>
-          <button
-            onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 transition-colors"
-          >
-            <Icon name="ChevronLeft" size={18} />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 transition-colors"
-          >
-            <Icon name="ChevronRight" size={18} />
-          </button>
-        </>
-      )}
-
-      <div
-        ref={scrollRef}
-        className="flex gap-6 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
-        style={{ scrollbarWidth: "none" }}
-      >
+    <Carousel opts={{ align: "start", loop: true }} className="w-full">
+      <CarouselContent className="-ml-4">
         {articles.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+          <CarouselItem key={article.id} className="pl-4 basis-[80%] sm:basis-[55%] md:basis-1/3">
+            <ArticleCard article={article} />
+          </CarouselItem>
         ))}
+      </CarouselContent>
+      <div className="flex items-center justify-center gap-3 mt-6">
+        <CarouselPrevious className="static translate-y-0" />
+        <CarouselNext className="static translate-y-0" />
       </div>
-    </div>
+    </Carousel>
   );
 }
 
@@ -120,7 +99,7 @@ function ArticleCard({ article }: { article: Article }) {
   return (
     <Link
       to={`/useful/article/${article.slug}`}
-      className="w-72 md:w-80 shrink-0 snap-start rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 text-left group"
+      className="w-full rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 text-left group block"
     >
       <div className="relative h-44 overflow-hidden bg-gray-50">
         <img src={article.image} alt={article.title} className="w-full h-full object-cover" />

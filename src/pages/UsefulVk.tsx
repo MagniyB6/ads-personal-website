@@ -28,7 +28,7 @@ export default function UsefulVk() {
         <div className="flex flex-col gap-4">
           <Link
             to="/useful/vk-ad-generator"
-            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
             style={{ borderColor: "#2688EB", background: "#2688EB10" }}
           >
             <div className="flex items-center gap-4">

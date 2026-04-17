@@ -174,7 +174,7 @@ export default function AdGenerator() {
             </p>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <Icon name="Zap" size={13} />
               {limitReached
@@ -185,7 +185,7 @@ export default function AdGenerator() {
             <button
               onClick={generate}
               disabled={loading || limitReached || !description.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "#FEEB19", color: "#000" }}
             >
               {loading
@@ -270,12 +270,12 @@ function AdField({
 
   return (
     <div className="bg-gray-50 rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-1 mb-2">
         <div>
           <span className="text-sm font-bold text-black">{label}</span>
           <span className="text-xs text-gray-400 ml-2">{hint}</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <CharCounter value={value} max={max} />
           <CopyButton text={value} />
         </div>

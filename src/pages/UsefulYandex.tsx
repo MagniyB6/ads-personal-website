@@ -30,7 +30,7 @@ export default function UsefulYandex() {
         <div className="flex flex-col gap-6">
           <Link
             to="/useful/ad-generator"
-            className="flex items-center justify-between px-6 py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
+            className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 rounded-2xl border-2 hover:opacity-90 transition-opacity"
             style={{ borderColor: "#FEEB19", background: "#FEEB1910" }}
           >
             <div className="flex items-center gap-4">
@@ -48,7 +48,7 @@ export default function UsefulYandex() {
           <div className="rounded-2xl border border-gray-200 overflow-hidden">
             <Link
               to="/useful/yandex/qa"
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-4 md:px-6 md:py-5 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#FEEB19" }}>

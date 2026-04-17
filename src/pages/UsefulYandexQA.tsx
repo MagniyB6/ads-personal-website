@@ -12,7 +12,7 @@ function QAAccordion({ item }: { item: QAItem }) {
       className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => setOpen((v) => !v)}
     >
-      <div className="flex items-center justify-between gap-4 px-5 py-5">
+      <div className="flex items-center justify-between gap-3 px-4 py-4 md:px-5 md:py-5">
         <p className="font-semibold text-black text-sm leading-snug">{item.question}</p>
         <span
           className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-transform"
@@ -26,7 +26,7 @@ function QAAccordion({ item }: { item: QAItem }) {
         </span>
       </div>
       {open && (
-        <div className="px-5 pb-5">
+        <div className="px-4 pb-4 md:px-5 md:pb-5">
           <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
             {item.answer.split("\n\n").map((para, i) => (
               <p key={i} className="text-sm text-gray-600 leading-relaxed">
@@ -43,7 +43,7 @@ function QAAccordion({ item }: { item: QAItem }) {
 function QAMobileCard({ item }: { item: QAItem }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col h-full">
-      <div className="px-5 pt-5 pb-5 flex flex-col gap-3">
+      <div className="px-4 pt-4 pb-4 md:px-5 md:pt-5 md:pb-5 flex flex-col gap-3">
         <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEEB19" }}>
           <Icon name="MessageCircleQuestion" size={14} />
         </div>
