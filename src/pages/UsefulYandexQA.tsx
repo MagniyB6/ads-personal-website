@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import { QA_GROUPS, QAItem } from "@/data/qaData";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 function QAAccordion({ item }: { item: QAItem }) {
   const [open, setOpen] = useState(false);
@@ -41,12 +42,12 @@ function QAAccordion({ item }: { item: QAItem }) {
 
 function QAMobileCard({ item }: { item: QAItem }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col w-[82vw] max-w-xs shrink-0 snap-start">
-      <div className="px-5 pt-5 pb-3">
-        <div className="w-7 h-7 rounded-full flex items-center justify-center mb-3" style={{ background: "#FEEB19" }}>
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="px-5 pt-5 pb-5 flex flex-col gap-3">
+        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FEEB19" }}>
           <Icon name="MessageCircleQuestion" size={14} />
         </div>
-        <p className="font-semibold text-black text-sm leading-snug mb-3">{item.question}</p>
+        <p className="font-semibold text-black text-sm leading-snug">{item.question}</p>
         <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
           {item.answer.split("\n\n").map((para, i) => (
             <p key={i} className="text-xs text-gray-500 leading-relaxed">
@@ -55,22 +56,6 @@ function QAMobileCard({ item }: { item: QAItem }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function QAMobileCarousel({ items }: { items: QAItem[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  return (
-    <div
-      ref={scrollRef}
-      className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
-      style={{ scrollbarWidth: "none" }}
-    >
-      {items.map((item, i) => (
-        <QAMobileCard key={i} item={item} />
-      ))}
     </div>
   );
 }
@@ -133,9 +118,21 @@ export default function UsefulYandexQA() {
               ))}
             </div>
 
-            {/* Mobile: horizontal carousel with full cards */}
+            {/* Mobile: looping carousel */}
             <div className="md:hidden">
-              <QAMobileCarousel items={currentGroup.items} />
+              <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                <CarouselContent className="-ml-4">
+                  {currentGroup.items.map((item, i) => (
+                    <CarouselItem key={i} className="pl-4 basis-[85%]">
+                      <QAMobileCard item={item} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="flex items-center justify-center gap-3 mt-6">
+                  <CarouselPrevious className="static translate-y-0" />
+                  <CarouselNext className="static translate-y-0" />
+                </div>
+              </Carousel>
             </div>
           </>
         )}
