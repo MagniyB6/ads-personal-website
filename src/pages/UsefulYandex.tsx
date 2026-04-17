@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "@/components/ui/icon";
 import RsyBlock from "@/components/yandex/RsyBlock";
 import { RSY_SECTIONS } from "@/components/yandex/rsySitesData";
+import QASection from "@/components/yandex/QASection";
 
 export default function UsefulYandex() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -44,6 +45,8 @@ export default function UsefulYandex() {
           </Link>
 
           <RsyBlock sections={RSY_SECTIONS} />
+
+          <QASection />
         </div>
       </main>
     </div>
